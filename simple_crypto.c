@@ -25,7 +25,15 @@ char* random_string(int length){
 
 
 char* one_time_pad(char* text, char* pad){
-	printf("This is the text returned:%s", text);
-
-	return text;
+	int length = strlen(text);  // it will count the \0 character at the end!
+	int counter;
+	char temp;  // temporary to hold value of input text character during xor
+	char * output = (char*)malloc(length*sizeof(char));
+	for (counter=0;counter<length;counter++){
+		temp = text[counter]^pad[counter];
+		output[counter] = temp;
+	}
+	output[counter] = '\0';  // add the end string character
+	printf("This is the output before exiting: %s \n", output);
+	return output;
 }

@@ -2,7 +2,5 @@
 
 
 void main(){
-	char* text="GETCOVERATDAWN";
-	text = one_time_pad("ATTACKATDAWN","JTTWKDRTHGOI");
-	random_string(5);
+	printf("\n The ciphertext is %s \n", one_time_pad("attack","fatcat"));
 }
