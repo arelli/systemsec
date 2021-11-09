@@ -48,15 +48,14 @@ struct otp_response one_time_pad(char* text, char* pad){
 	response->pad = pad;  // get pad from arguments
 
 	for (counter=0;counter<length;counter++){
-		//temp = text[counter]^pad[counter];
-		response->encrypted_text[counter] = text[counter]^pad[counter];
-		if (text[counter]==pad[counter]){// avoid generating NULL's, while lowering security(just a... bit!)
-			response->pad[counter] = text[counter];		
+		if ((text[counter]==pad[counter])){  // avoid generating NULL's, and skip special characters, while lowering security(just a... bit!)
+			response->encrypted_text[counter] = text[counter];		
 		}
+		else
+			response->encrypted_text[counter] = text[counter]^pad[counter];
 		
 	}
 	response->encrypted_text[counter] = '\0';  // add the end string character
-	printf("5");
 	return *response;
 }
 	

@@ -2,15 +2,15 @@
 
 
 void main(){
-	char text[] = "abb";
+	char text[] = "message!!";
 	
 	int length = strlen(text);
 	char * pad = (char*)malloc(length*sizeof(char));
 	char* ciphertext = (char*)malloc(length*sizeof(char));
 	char* deciphered = (char*)malloc(length*sizeof(char));
 
-	// test the OTP algorithm
-	pad = random_string(length);
+	// ONE TIME PAD testing
+	pad  = random_string(length);
 
 	struct otp_response *otp_rsp;
 
@@ -32,14 +32,14 @@ void main(){
 
 	new_pad = otp_rsp->pad;
 
-	*otp_rsp = one_time_pad(new_pad,ciphertext);
+	*otp_rsp = one_time_pad(ciphertext, new_pad);
 	deciphered = otp_rsp->encrypted_text;
 	pad = otp_rsp->pad;
 
 	printf("\n The deciphered text of \"%s\" with key \"%s\" is: %s\n\n\n", ciphertext,pad, deciphered);
 
 
-	// CAESARS SHIFT
+	// CAESARS SHIFT testing
 	ciphertext = caesar(text,5);
 	printf("Caesar for text and offset 5 is: %s\n" , ciphertext);
 	printf("Caesar decrypted(-5 offset): %s\n", caesar(ciphertext, -5));
