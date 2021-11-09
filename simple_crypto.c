@@ -1,8 +1,4 @@
-#include<stdio.h>
-#include<ctype.h>  // for checking if a character is printable
-#include<stdlib.h>
-#include<string.h>
-#include"simple_crypto.h"
+
 
 char* random_string(int length){
 	char* random_string = (char*)malloc(length*sizeof(char));
@@ -30,5 +26,6 @@ char* random_string(int length){
 
 char* one_time_pad(char* text, char* pad){
 	printf("This is the text returned:%s", text);
+
 	return text;
 }
