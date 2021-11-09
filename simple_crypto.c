@@ -1,4 +1,15 @@
 
+// print not printable characters
+void print_npc(char* npc_string){
+	int i;
+	for(i=0;i<=strlen(npc_string);i++){
+		if(isprint(npc_string[i]))
+			printf(" %c ", npc_string[i]);
+		else
+			printf(" %x ", npc_string[i]);
+	}
+	printf("\n");
+}
 
 char* random_string(int length){
 	char* random_string = (char*)malloc(length*sizeof(char));
@@ -12,13 +23,15 @@ char* random_string(int length){
 	fread(random_string,sizeof(char),length,fpointer);  // read somr bytes from fpointer position to random_string
 	printf("\nThe random string generated is: ");
 	// print the random string, even non printable characters as hex(%x)
-	for(i=1;i<=length;i++){
+	/*for(i=1;i<=length;i++){
 		if (isprint(random_string[i]))
 			printf(" %c ", random_string[i]);
 		else
 			printf(" %x ", random_string[i]);
 	}
 	printf("\n");
+	*/
+	print_npc(random_string);
 	return random_string;
 
 }
