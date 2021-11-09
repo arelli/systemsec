@@ -29,8 +29,32 @@ char* random_string(int length){
 	return random_string;
 }
 
+int is_letter(char input){
+	if(((input>='A')&&(input<='Z')) || ((input>='a')&&(input<='z')) || ((input>='0')&&(input<='9')))
+		return 1;
+	else
+		return 0;
+}
+
+// strip special characters from strings
+char* strip_special(char* input){
+	int i; int j=0;
+	char* output = (char*)malloc(sizeof(char)*strlen(input));
+	for(i=0;input[i]!='\0';i++){
+		if(is_letter(input[i])){
+			output[j] = input[i];
+			j++;
+		}
+	}
+	if(strlen(output)<strlen(input))
+		output[j+1] = '\0';
+	return output;
+}
 
 
+// implementation of the One Time Pad encryption Algorithm
+// accepts two arguments, one being the text-to-be-encrypted(or decrypted)
+// and the other thepad(key) for encryption/decryption.
 char* one_time_pad(char* text, char* pad){
 	int length = strlen(text);  // it will count the \0 character at the end!
 	int counter;
@@ -48,7 +72,10 @@ char* one_time_pad(char* text, char* pad){
 	response[counter] = '\0';  // add the end string character
 	return response;
 }
-	
+
+// Implementation of the caesars shift encryption algorithm
+// arguments: the string to encrypt/decrypt and the size of
+// offset to apply.(either to encrypt or decrypt)
 char* caesar(char* text, int shift){
 	int length = strlen(text);
 	int i;
@@ -56,21 +83,26 @@ char* caesar(char* text, int shift){
 	char temp;
 	char ch;
 
+	// define the limits of the alphabet
+	if (shift>0)
+		shift = shift%26;
+	else if (shift<0)
+		shift = (-1)*(((-1)*shift)%26);
 
 	for(i=0;i<length;i++){
 		ch = text[i];
 		if ((text[i] >= 'A') && (ch<='Z')){  // if uppercase..
-			if ((ch+shift)>= 'Z')
+			if ((ch+shift)> 'Z')
 				temp= ch +(shift-26);  // the english alphabet has 26 letters
-			else if ((ch+shift)<='A')
+			else if ((ch+shift)<'A')
 				temp = text[i]+(shift+26);
 			else
 				temp = ch + shift;
 		}
 		else if ((ch >= 'a') && (ch<='z')){  // if lowercase..
-			if ((ch+shift)>= 'z')
+			if ((ch+shift)> 'z')
 				temp= ch+(shift-26);
-			else if ((ch+shift)<='a')
+			else if ((ch+shift)<'a')
 				temp = ch+(shift+26);
 			else
 				temp = ch + shift;

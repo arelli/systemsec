@@ -2,7 +2,7 @@
 
 
 void main(){
-	char text[] = "message!!";
+	char* text = strip_special("messAbge!!z");  // strip non-letters 
 	
 	int length = strlen(text);
 	char * pad = (char*)malloc(length*sizeof(char));
@@ -10,7 +10,7 @@ void main(){
 	char* deciphered = (char*)malloc(length*sizeof(char));
 
 	// ONE TIME PAD testing
-	pad  = random_string(length);
+	pad  = random_string(length);  
 
 	ciphertext = one_time_pad(text,pad);
 
@@ -25,7 +25,7 @@ void main(){
 
 
 	// CAESARS SHIFT testing
-	ciphertext = caesar(text,5);
+	ciphertext = caesar(text,111);
 	printf("Caesar for text and offset 5 is: %s\n" , ciphertext);
-	printf("Caesar decrypted(-5 offset): %s\n", caesar(ciphertext, -5));
+	printf("Caesar decrypted(-5 offset): %s\n", caesar(ciphertext, -111));
 }
