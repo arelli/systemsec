@@ -12,29 +12,14 @@ void main(){
 	// ONE TIME PAD testing
 	pad  = random_string(length);
 
-	struct otp_response *otp_rsp;
+	ciphertext = one_time_pad(text,pad);
 
-	otp_rsp = (struct otp_response *)malloc(sizeof(struct otp_response));
-	otp_rsp->encrypted_text = (char*)malloc(length);
-	otp_rsp->pad = (char*)malloc(length);
-
-
-	*otp_rsp = one_time_pad(text,pad);
-
-	ciphertext = otp_rsp->encrypted_text;
-	pad = otp_rsp->pad;
 	printf("\n The ciphertext of \"%s\" (with pad=%s) is :", text, pad);
-    print_npc(ciphertext);  // debug
+    //print_npc(ciphertext);  // debug
 	printf("\n");
 
 
-	char * new_pad = (char*)malloc(length);
-
-	new_pad = otp_rsp->pad;
-
-	*otp_rsp = one_time_pad(ciphertext, new_pad);
-	deciphered = otp_rsp->encrypted_text;
-	pad = otp_rsp->pad;
+	deciphered = one_time_pad(ciphertext, pad);
 
 	printf("\n The deciphered text of \"%s\" with key \"%s\" is: %s\n\n\n", ciphertext,pad, deciphered);
 

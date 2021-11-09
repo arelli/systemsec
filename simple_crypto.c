@@ -30,33 +30,23 @@ char* random_string(int length){
 }
 
 
-struct otp_response {
-	char* encrypted_text;
-	char* pad;
-};
 
-struct otp_response one_time_pad(char* text, char* pad){
+char* one_time_pad(char* text, char* pad){
 	int length = strlen(text);  // it will count the \0 character at the end!
 	int counter;
 	char temp;  // temporary to hold value of input text character during xor
-
-	// the response data, plaintext AND pad
-	struct otp_response* response;
-	response = (struct otp_response *)malloc(sizeof(struct otp_response));
-	response->encrypted_text = (char*)malloc(length*sizeof(char));
-	response->pad = (char*)malloc(length*sizeof(char));
-	response->pad = pad;  // get pad from arguments
+	char* response = (char*)malloc(length);
 
 	for (counter=0;counter<length;counter++){
 		if ((text[counter]==pad[counter])){  // avoid generating NULL's, and skip special characters, while lowering security(just a... bit!)
-			response->encrypted_text[counter] = text[counter];		
+			response[counter] = text[counter];		
 		}
 		else
-			response->encrypted_text[counter] = text[counter]^pad[counter];
+			response[counter] = text[counter]^pad[counter];
 		
 	}
-	response->encrypted_text[counter] = '\0';  // add the end string character
-	return *response;
+	response[counter] = '\0';  // add the end string character
+	return response;
 }
 	
 char* caesar(char* text, int shift){
