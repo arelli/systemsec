@@ -11,6 +11,7 @@ void print_npc(char* npc_string){
 	printf("\n");
 }
 
+// get random string of given length from urandom!
 char* random_string(int length){
 	char* random_string = (char*)malloc(length*sizeof(char));
 	int i;
@@ -22,16 +23,9 @@ char* random_string(int length){
 	fpointer = fopen("/dev/urandom", "r");  // read file in binary mode
 	fread(random_string,sizeof(char),length,fpointer);  // read somr bytes from fpointer position to random_string
 	printf("\nThe random string generated is: ");
-	// print the random string, even non printable characters as hex(%x)
-	/*for(i=1;i<=length;i++){
-		if (isprint(random_string[i]))
-			printf(" %c ", random_string[i]);
-		else
-			printf(" %x ", random_string[i]);
-	}
-	printf("\n");
-	*/
+
 	print_npc(random_string);
+
 	return random_string;
 
 }
@@ -47,6 +41,5 @@ char* one_time_pad(char* text, char* pad){
 		output[counter] = temp;
 	}
 	output[counter] = '\0';  // add the end string character
-	printf("This is the output before exiting: %s \n", output);
 	return output;
 }
