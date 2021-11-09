@@ -27,11 +27,9 @@ char* random_string(int length){
 	//print_npc(random_string);
 
 	return random_string;
-
 }
 
-// in the return of  one_time_pad() we need to prpovide the key, that stores
-// information about special characters and would-be NULL's.
+
 struct otp_response {
 	char* encrypted_text;
 	char* pad;
@@ -43,22 +41,23 @@ struct otp_response one_time_pad(char* text, char* pad){
 	char temp;  // temporary to hold value of input text character during xor
 
 	// the response data, plaintext AND pad
-	struct otp_response response;
-	response.encrypted_text = (char*)malloc(length*sizeof(char));
-	response.pad = (char*)malloc(length*sizeof(char));
+	struct otp_response* response;
+	response = (struct otp_response *)malloc(sizeof(struct otp_response));
+	response->encrypted_text = (char*)malloc(length*sizeof(char));
+	response->pad = (char*)malloc(length*sizeof(char));
+	response->pad = pad;  // get pad from arguments
 
 	for (counter=0;counter<length;counter++){
-		if (text[counter]==pad[counter]){  // avoid generating NULL's, while lowering security(just a... bit!)
-			response.encrypted_text[counter] = text[counter];		
+		//temp = text[counter]^pad[counter];
+		response->encrypted_text[counter] = text[counter]^pad[counter];
+		if (text[counter]==pad[counter]){// avoid generating NULL's, while lowering security(just a... bit!)
+			response->pad[counter] = text[counter];		
 		}
-		else{
-			temp = text[counter]^pad[counter];
-			response.encrypted_text[counter] = temp;
-		}
+		
 	}
-	response.encrypted_text[counter] = '\0';  // add the end string character
-	// print_npc(response.encrypted_text);  // debug
-	return response;
+	response->encrypted_text[counter] = '\0';  // add the end string character
+	printf("5");
+	return *response;
 }
 	
 char* caesar(char* text, int shift){
