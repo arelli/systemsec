@@ -5,6 +5,7 @@
 #include<ctype.h>
 #include<stdlib.h>
 #include<string.h>
+#include<time.h>
 #include"simple_crypto.c"
 
 char* one_time_pad(char* text, char* pad);

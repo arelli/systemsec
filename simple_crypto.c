@@ -1,8 +1,11 @@
 
 // print not printable characters
-void print_npc(char* npc_string){
+// takes as arguments the string, and its supposed length
+// to avoid stoping at NULL's that may occur during
+// OTP encryption
+void print_npc(char* npc_string, int length){
 	int i;
-	for(i=0;i<strlen(npc_string);i++){
+	for(i=0;i<length;i++){
 		if(isprint(npc_string[i]))
 			printf(" %c", npc_string[i]);  
 		else
@@ -102,13 +105,13 @@ char* caesar(char* text, int shift){
 	// define the limits of the alphabet
 	shift = shift%alphabet_length;
 
-
 	for(i=0;i<length;i++){
 		ch = text[i];
 		position = find(ch,alphabet);
+
 		if ((position+shift)>alphabet_length)  // z has index 61(62 characters)
 			temp = alphabet[position + shift - alphabet_length];
-		else if ((position+shift)<alphabet_length)
+		else if ((position+shift)<0)
 			temp = alphabet[position + shift + alphabet_length];
 		else
 			temp = alphabet[position+shift];

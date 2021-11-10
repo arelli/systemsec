@@ -3,9 +3,8 @@
 
 void main(){
 	//char* text = strip_special("messAbgez");  
-
 	char buffer[101];
-	printf("[OTP]input: ");
+	printf("[OTP]input:      ");
 	scanf(" %100[^\n]", buffer);
 	char* text = (char *) malloc(strlen(buffer) + 1);
 	strcpy(text, buffer);
@@ -20,13 +19,16 @@ void main(){
 	pad  = random_string(length);  
 	ciphertext = one_time_pad(text,pad);
 	printf("[OTP]encrypted:");
-    print_npc(ciphertext);  
+    print_npc(ciphertext, length);  
 	printf("[OTP]decrypted:");
-    print_npc(one_time_pad(ciphertext, pad));  
-
+    print_npc(one_time_pad(ciphertext, pad),length);  
 
 	// CAESARS SHIFT testing
-	ciphertext = caesar(text,5);
-	printf("Caesar for text and offset 5 is: %s\n" , ciphertext);
-	printf("Caesar decrypted(-5 offset): %s\n", caesar(ciphertext, -5));
+	srand(time(NULL));
+	int offset = rand() % 60;
+	ciphertext = caesar(text,offset);
+	printf("[CAESAR]input:   %s \n", text);
+	printf("[CAESAR]encrypted: %s\n" , ciphertext);
+	printf("[CAESAR]key:       %d\n", offset);
+	printf("[CAESAR]decrypted: %s\n", caesar(ciphertext, (-1)*offset));
 }
