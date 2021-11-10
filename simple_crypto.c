@@ -4,9 +4,9 @@ void print_npc(char* npc_string){
 	int i;
 	for(i=0;i<strlen(npc_string);i++){
 		if(isprint(npc_string[i]))
-			printf(" %c ", npc_string[i]);
+			printf(" %c", npc_string[i]);  
 		else
-			printf(" %x ", npc_string[i]);
+			printf(" 0x%X", npc_string[i] & 0xff);  // &0xff to mask only the 8 lower bits!
 	}
 	printf("\n");
 }
@@ -29,8 +29,9 @@ char* random_string(int length){
 	return random_string;
 }
 
+// check if a character is a printable english language letter
 int is_letter(char input){
-	if(((input>='A')&&(input<='Z')) || ((input>='a')&&(input<='z')) || ((input>='0')&&(input<='9')))
+	if(((input>='A')&&(input<='Z')) || ((input>='a')&&(input<='z')) || ((input>='0')&&(input<='9')) || (input==' '))
 		return 1;
 	else
 		return 0;
@@ -73,6 +74,16 @@ char* one_time_pad(char* text, char* pad){
 	return response;
 }
 
+// search in string for term, and return the index if found
+int find(char term,char* string){
+	int i;
+	for (i=0;string[i]!='\0';i++){
+		if(string[i]==term)
+			return i;
+	}
+	return 0;  // haven't found anything
+}
+
 // Implementation of the caesars shift encryption algorithm
 // arguments: the string to encrypt/decrypt and the size of
 // offset to apply.(either to encrypt or decrypt)
@@ -82,31 +93,26 @@ char* caesar(char* text, int shift){
 	char* ciphertext = (char*)malloc(length*sizeof(char));
 	char temp;
 	char ch;
+	int position;
+
+
+	char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	int alphabet_length = strlen(alphabet);
 
 	// define the limits of the alphabet
-	if (shift>0)
-		shift = shift%26;
-	else if (shift<0)
-		shift = (-1)*(((-1)*shift)%26);
+	shift = shift%alphabet_length;
+
 
 	for(i=0;i<length;i++){
 		ch = text[i];
-		if ((text[i] >= 'A') && (ch<='Z')){  // if uppercase..
-			if ((ch+shift)> 'Z')
-				temp= ch +(shift-26);  // the english alphabet has 26 letters
-			else if ((ch+shift)<'A')
-				temp = text[i]+(shift+26);
-			else
-				temp = ch + shift;
-		}
-		else if ((ch >= 'a') && (ch<='z')){  // if lowercase..
-			if ((ch+shift)> 'z')
-				temp= ch+(shift-26);
-			else if ((ch+shift)<'a')
-				temp = ch+(shift+26);
-			else
-				temp = ch + shift;
-		}
+		position = find(ch,alphabet);
+		if ((position+shift)>alphabet_length)  // z has index 61(62 characters)
+			temp = alphabet[position + shift - alphabet_length];
+		else if ((position+shift)<alphabet_length)
+			temp = alphabet[position + shift + alphabet_length];
+		else
+			temp = alphabet[position+shift];
+
 		ciphertext[i]=temp;
 	}
 	return ciphertext;

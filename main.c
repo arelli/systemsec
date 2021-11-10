@@ -2,30 +2,31 @@
 
 
 void main(){
-	char* text = strip_special("messAbge!!z");  // strip non-letters 
+	//char* text = strip_special("messAbgez");  
+
+	char buffer[101];
+	printf("[OTP]input: ");
+	scanf(" %100[^\n]", buffer);
+	char* text = (char *) malloc(strlen(buffer) + 1);
+	strcpy(text, buffer);
+	text = strip_special(text);
+	//printf("The cleared string is: \"%s\"\n\n", text);  // debug
 	
 	int length = strlen(text);
 	char * pad = (char*)malloc(length*sizeof(char));
 	char* ciphertext = (char*)malloc(length*sizeof(char));
-	char* deciphered = (char*)malloc(length*sizeof(char));
 
 	// ONE TIME PAD testing
 	pad  = random_string(length);  
-
 	ciphertext = one_time_pad(text,pad);
-
-	printf("\n The ciphertext of \"%s\" (with pad=%s) is :", text, pad);
-    //print_npc(ciphertext);  // debug
-	printf("\n");
-
-
-	deciphered = one_time_pad(ciphertext, pad);
-
-	printf("\n The deciphered text of \"%s\" with key \"%s\" is: %s\n\n\n", ciphertext,pad, deciphered);
+	printf("[OTP]encrypted:");
+    print_npc(ciphertext);  
+	printf("[OTP]decrypted:");
+    print_npc(one_time_pad(ciphertext, pad));  
 
 
 	// CAESARS SHIFT testing
-	ciphertext = caesar(text,111);
+	ciphertext = caesar(text,5);
 	printf("Caesar for text and offset 5 is: %s\n" , ciphertext);
-	printf("Caesar decrypted(-5 offset): %s\n", caesar(ciphertext, -111));
+	printf("Caesar decrypted(-5 offset): %s\n", caesar(ciphertext, -5));
 }
