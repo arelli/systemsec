@@ -2,20 +2,18 @@
 
 
 void main(){
-	//char* text = strip_special("messAbgez");  
+	// ONE TIME PAD testing
 	char buffer[101];
 	printf("[OTP]input:           ");
 	scanf(" %100[^\n]", buffer);
 	char* text = (char *) malloc(strlen(buffer) + 1);
 	strcpy(text, buffer);
 	text = strip_special(text);
-	//printf("The cleared string is: \"%s\"\n\n", text);  // debug
-	
+
 	int length = strlen(text);
 	char * pad = (char*)malloc(length*sizeof(char));
 	char* ciphertext = (char*)malloc(length*sizeof(char));
 
-	// ONE TIME PAD testing
 	pad  = random_string(length);  
 	ciphertext = one_time_pad(text,pad);
 	printf("[OTP]encrypted:      ");
@@ -23,23 +21,35 @@ void main(){
 	printf("[OTP]decrypted:      ");
     print_npc(one_time_pad(ciphertext, pad),length);  
 
+
 	// CAESARS SHIFT testing
+	printf("\n\n[CAESAR]input:           ");
+	scanf(" %100[^\n]", buffer);
+	text = (char *) malloc(strlen(buffer) + 1);
+	strcpy(text, buffer);
+	text = strip_special(text);
+
 	srand(time(NULL));
 	int offset = rand() % 60;
 	ciphertext = caesar(text,offset);
-	printf("\n[CAESAR]input:      %s \n", text);
 	printf("[CAESAR]encrypted:   %s\n" , ciphertext);
 	printf("[CAESAR]key:         %d\n", offset);
 	printf("[CAESAR]decrypted:   %s\n", caesar(ciphertext, (-1)*offset));
 
 
-	pad =random_string_letters('A','Z',length);	
+	//Vigenere Testing
+	printf("\n\n[Vigenere]input:           ");
+	scanf(" %100[^\n]", buffer);
+	text = (char *) malloc(strlen(buffer) + 1);
+	strcpy(text, buffer);
+	text = strip_special(text);
+
+	pad =random_string_letters('A','Z',strlen(text));	
 	ciphertext = vigenere(text,pad);
 
-	printf("\n[vigenere]input:    %s \n", text);
-	printf("[vigenere]key:       %s\n", pad);
-	printf("[vigenere]encrypted: %s\n" , ciphertext);
-	printf("[vigenere]decrypted: %s\n", vigenere(ciphertext,pad));
+	printf("[Vigenere]key:       %s\n", pad);
+	printf("[Vigenere]encrypted: %s\n" , ciphertext);
+	printf("[Vigenere]decrypted: %s\n", vigenere(ciphertext,pad));
 
 
 

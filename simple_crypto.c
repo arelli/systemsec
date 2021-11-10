@@ -45,6 +45,8 @@ char* random_string_letters(char lowest, char highest,int length){
 			letter_counter++;
 		}
 	}
+	printf("[DB] the length=%d\n",length);
+	print_npc(random_str,length);
 	return random_str;
 }
 
@@ -151,28 +153,25 @@ char* vigenere(char* text, char* key){
 	char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	char* temp_alphabet= (char*)malloc(27);  // will be changed right away 
 	char* ciphertext = (char*)malloc(strlen(text)*sizeof(char));
-	int i;
-	int length = strlen(text);
+	int i,row, column, length = strlen(text);
 	char temp;
-	char* temp_result;
-	int row;
-	int column;
+	char* temp_result;  // justo to translate from pointer to value
 
-    /*
-	TODO: make uppercase the key and the text! 
-	*/
+	//  make uppercase the text
 	for(i=0;i<length;i++){
-		if(key[i]>='a' && key[i]<='z')
-	        {
-	            key[i] = key[i] - 32;
-	        }
 	    if(text[i]>='a' && text[i]<='z')
 	        {
 	            text[i] = text[i] - 32;
 	        }
 	    }
-
-
+	/* calculate viginere output. Suppose rows are for input, and columns for output.
+	->first, find which letter of the alphabet is the  letter of the text
+	->then, transpose the normal alphabet by the number found above. This is
+	essentially the row picture in the viginere matrix.
+	->find the index(in this transposed alphabet) of the letter of the key.
+	this is the row in the viginere matrix!
+	->The above index, if used as index of the normal alphabed, gives us the
+	cipher character.*/
 	for(i=0;i<strlen(text);i++){
 		temp = text[i];
 		row = find(temp,alphabet);  // "row number". the temp_alphabet is shifted that amount.
