@@ -30,7 +30,7 @@ char* random_string(int length){
 	return random_string;
 }
 
-
+// returns a string  of a certain length with random letters within a given ASCII range
 char* random_string_letters(char lowest, char highest,int length){
 	int letter_counter = 0;
 	char* temp_ptr;
@@ -45,8 +45,6 @@ char* random_string_letters(char lowest, char highest,int length){
 			letter_counter++;
 		}
 	}
-	printf("[DB] the length=%d\n",length);
-	print_npc(random_str,length);
 	return random_str;
 }
 
@@ -140,12 +138,12 @@ char* caesar_core(char* text, int shift, char* alphabet){
 }
 
 // wrapper function to provide this exact alphabet
+// it is needed to use the caesar_core in the vigenere function
+// and avoid code repetition
 char* caesar(char* text, int shift){
 	char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	return caesar_core(text,shift,alphabet);
 }
-
-
 
 
 // Vigenere cipher implementation usin caesar_core

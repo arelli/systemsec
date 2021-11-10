@@ -29,6 +29,10 @@ void main(){
 	strcpy(text, buffer);
 	text = strip_special(text);
 
+	length = strlen(text);
+	pad = (char*)malloc(length*sizeof(char));
+	ciphertext = (char*)malloc(length*sizeof(char));
+
 	srand(time(NULL));
 	int offset = rand() % 60;
 	ciphertext = caesar(text,offset);
@@ -43,6 +47,11 @@ void main(){
 	text = (char *) malloc(strlen(buffer) + 1);
 	strcpy(text, buffer);
 	text = strip_special(text);
+
+	length = strlen(text);
+	pad = (char*)malloc(length*sizeof(char));
+	ciphertext = (char*)malloc(length*sizeof(char));
+
 
 	pad =random_string_letters('A','Z',strlen(text));	
 	ciphertext = vigenere(text,pad);
