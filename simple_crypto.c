@@ -22,14 +22,30 @@ char* random_string(int length){
 		printf("Error when allocating memory for random string...Exiting..\n");
 		return NULL;
 	}
+
 	FILE *fpointer;
 	fpointer = fopen("/dev/urandom", "r");  // read file in binary mode
 	fread(random_string,sizeof(char),length,fpointer);  // read somr bytes from fpointer position to random_string
-	
-	//printf("\nThe random string generated is: ");
-	//print_npc(random_string);
 
 	return random_string;
+}
+
+
+char* random_string_letters(char lowest, char highest,int length){
+	int letter_counter = 0;
+	char* temp_ptr;
+	char temp;
+	char* random_str = (char*)malloc(sizeof(char)*length);
+
+	while(letter_counter<length){
+		temp_ptr = random_string(1);  // get random ASCII character
+		temp = *temp_ptr;
+		if (temp>=lowest && temp<=highest){
+			random_str[letter_counter] = temp;
+			letter_counter++;
+		}
+	}
+	return random_str;
 }
 
 // check if a character is a printable english language letter
@@ -90,7 +106,8 @@ int find(char term,char* string){
 // Implementation of the caesars shift encryption algorithm
 // arguments: the string to encrypt/decrypt and the size of
 // offset to apply.(either to encrypt or decrypt)
-char* caesar(char* text, int shift){
+// Works also for single characters, and is used in vigenere() later(only the core).
+char* caesar_core(char* text, int shift, char* alphabet){
 	int length = strlen(text);
 	int i;
 	char* ciphertext = (char*)malloc(length*sizeof(char));
@@ -98,8 +115,7 @@ char* caesar(char* text, int shift){
 	char ch;
 	int position;
 
-
-	char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	//char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	int alphabet_length = strlen(alphabet);
 
 	// define the limits of the alphabet
@@ -109,7 +125,7 @@ char* caesar(char* text, int shift){
 		ch = text[i];
 		position = find(ch,alphabet);
 
-		if ((position+shift)>alphabet_length)  // z has index 61(62 characters)
+		if ((position+shift)>=alphabet_length)  // z has index 61(62 characters)
 			temp = alphabet[position + shift - alphabet_length];
 		else if ((position+shift)<0)
 			temp = alphabet[position + shift + alphabet_length];
@@ -118,5 +134,55 @@ char* caesar(char* text, int shift){
 
 		ciphertext[i]=temp;
 	}
+	return ciphertext;
+}
+
+// wrapper function to provide this exact alphabet
+char* caesar(char* text, int shift){
+	char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	return caesar_core(text,shift,alphabet);
+}
+
+
+
+
+// Vigenere cipher implementation usin caesar_core
+char* vigenere(char* text, char* key){
+	char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	char* temp_alphabet= (char*)malloc(27);  // will be changed right away 
+	char* ciphertext = (char*)malloc(strlen(text)*sizeof(char));
+	int i;
+	int length = strlen(text);
+	char temp;
+	char* temp_result;
+	int row;
+	int column;
+
+    /*
+	TODO: make uppercase the key and the text! 
+	*/
+	for(i=0;i<length;i++){
+		if(key[i]>='a' && key[i]<='z')
+	        {
+	            key[i] = key[i] - 32;
+	        }
+	    if(text[i]>='a' && text[i]<='z')
+	        {
+	            text[i] = text[i] - 32;
+	        }
+	    }
+
+
+	for(i=0;i<strlen(text);i++){
+		temp = text[i];
+		row = find(temp,alphabet);  // "row number". the temp_alphabet is shifted that amount.
+		temp_alphabet = caesar_core(alphabet,row,alphabet);  // shift the alphabet left by "row" characters
+
+		temp = key[i];
+		column = find(temp, temp_alphabet);  // the index of encrypted character is the column of shifted alphabet...
+
+		ciphertext[i] = alphabet[column];  //... and corresponds to the non-shifted alphabet.
+	}
+
 	return ciphertext;
 }
