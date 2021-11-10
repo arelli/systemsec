@@ -60,16 +60,16 @@ char* strip_special(char* input){
 // accepts two arguments, one being the text-to-be-encrypted(or decrypted)
 // and the other thepad(key) for encryption/decryption.
 char* one_time_pad(char* text, char* pad){
-	int length = strlen(text);  // it will count the \0 character at the end!
+	int length = strlen(pad);   // TODO: dangeroud! may result to dumped core. Maybe need to use strlen(text)
 	int counter;
 	char temp;  // temporary to hold value of input text character during xor
 	char* response = (char*)malloc(length);
 
 	for (counter=0;counter<length;counter++){
-		if ((text[counter]==pad[counter])){  // avoid generating NULL's, and skip special characters, while lowering security(just a... bit!)
-			response[counter] = text[counter];		
-		}
-		else
+		//if ((text[counter]==pad[counter])){  // avoid generating NULL's, and skip special characters, while lowering security(just a... bit!)
+		//	response[counter] = text[counter];		
+		//}
+		//else
 			response[counter] = text[counter]^pad[counter];
 		
 	}
