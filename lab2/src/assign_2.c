@@ -9,7 +9,7 @@
 #include <openssl/cmac.h>
 // compile with: gcc assign_2.c -lssl -lcrypto 
 
-#define BLOCK_SIZE 16  // used for AES?(const EVP_CIPHER *EVP_aes_192_ecb(void);)
+#define BLOCK_SIZE 16  
 
 
 /* function prototypes */
@@ -26,9 +26,7 @@ void gen_cmac(unsigned char *, size_t, unsigned char *, unsigned char *, int);
 int verify_cmac(unsigned char *, unsigned char *);
 
 
-
 /* TODO Declare your function prototypes here... */
-
 
 
 /*
@@ -70,7 +68,6 @@ print_string(unsigned char *data, size_t len)
 	}
 }
 
-//const EVP_MD *EVP_sha1(void);
 
 /*
  * Prints the usage message
@@ -147,9 +144,25 @@ check_args(char *input_file, char *output_file, unsigned char *password,
 void
 keygen(unsigned char *password, unsigned char *key, unsigned char *iv,
     int bit_mode)
-{
+{	// set the cipher type variable
+    const EVP_CIPHER *cipher_alg;
 
-	/* TODO Task A */
+    // set the cipher algorithm used
+    if (bit_mode==128)
+    	cipher_alg = EVP_aes_128_ecb(); 
+	else if (bit_mode==256)
+		cipher_alg = EVP_aes_256_ecb(); 
+	else{
+		printf("Invalid bit_mode..Exiting..");
+		return;
+	}
+    // set the hashing algorithm
+    const EVP_MD * hashing_algorithm =  EVP_get_digestbyname("sha1");
+    // the salt is null and the iteration count is 1. here the Hashing is being done
+    EVP_BytesToKey(cipher_alg, hashing_algorithm, NULL, password, strlen(password), 1 , key, iv);
+
+    printf("\n The password entered is: %s\n", password);
+    printf("\nThe hashed output from the password: %s\n", key);
 
 }
 
@@ -162,7 +175,34 @@ encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
     unsigned char *iv, unsigned char *ciphertext, int bit_mode)
 {
 
-	/* TODO Task B */
+	EVP_CIPHER_CTX* context;
+
+	int length, ciphertext_length;
+
+	/*initialise the context*/
+	context = EVP_CIPHER_CTX_new();
+
+	if (bit_mode==128)
+      EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, iv);  
+    else if (bit_mode==256)
+      EVP_EncryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, key, iv); 
+    else{
+      printf("Wrong bitmode (%d) provided.. Exiting..", bitmode);
+      return;
+    }
+
+    /* Set the content to be encrypted and get the output */
+    /* some arguments are passed by reference so that the function 
+    can change their values */
+    EVP_EncryptUpate(context, ciphertext, &length, plaintext, plaintext_len);
+    ciphertext_length += length;
+
+
+    /* Finalise the encryption */
+    EVP_EncryptFinal_ex(context, ciphertext + length, &length);
+
+    EVA_CIPHER_CTX_free(ctx);
+   	// the ciphertext is returned by reference
 
 }
 
@@ -179,6 +219,27 @@ decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
 	plaintext_len = 0;
 
 	/*TODO Task C */
+	EVP_CIPHER_CTX *context;
+	int length;
+
+	context = EVP_CIPHER_CTX_new()
+
+	if (bitmode==128)
+      EVP_DecryptInit_ex(context, EVP_aes_128_ecb(), NULL, key, iv);
+    else if (bitmode==256)
+      EVP_DecryptInit_ex(context, EVP_aes_256_ecb(), NULL, key, iv); 
+    else{
+      printf("Wrong bitmode (%d) provided.. Exiting..", bitmode);
+      return;
+    }
+
+    EVP_DexryptUpdate(context,plaintext,&length,ciphertext,ciphertext_length);
+    plaintext_len = length;
+    EVP_DecryptFinal_ex(context, plaintext+length, &length)
+    plaintext_len += length;
+
+    ECP_CIPHER_CTX_free(context);
+
 
 	return plaintext_len;
 }
@@ -193,6 +254,7 @@ gen_cmac(unsigned char *data, size_t data_len, unsigned char *key,
 {
 
 	/* TODO Task D */
+	printf("Task D not implemented yet... Exiting");
 
 }
 
@@ -208,6 +270,7 @@ verify_cmac(unsigned char *cmac1, unsigned char *cmac2)
 	verify = 0;
 
 	/* TODO Task E */
+	printf("Task E not implemented yet... Exiting");
 
 	return verify;
 }
