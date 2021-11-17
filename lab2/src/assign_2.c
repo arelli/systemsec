@@ -25,7 +25,7 @@ int decrypt(unsigned char *, int, unsigned char *, unsigned char *,
 void gen_cmac(unsigned char *, size_t, unsigned char *, unsigned char *, int);
 int verify_cmac(unsigned char *, unsigned char *);
 int write_to_file( char *,  char*, int length);
-const char* read_from_file(char*);
+char* read_from_file(char*, int* );
 
 
 /* TODO Declare your function prototypes here... */
@@ -162,8 +162,8 @@ keygen(unsigned char *password, unsigned char *key, unsigned char *iv,
     // warning: strlen takes a const char* as argument, so we use a cast.
     EVP_BytesToKey(cipher_alg, hashing_algorithm, NULL, password, strlen((const char*)password), 1 , key, iv);
 
-    printf("\n The password entered is: %s\n", password);
-    printf("\nThe hashed output from the password: %s\n", key);
+    //printf("\n The password entered is: %s\n", password);
+    //printf("\nThe hashed output from the password: %s\n", key);
 
 }
 
@@ -282,7 +282,7 @@ verify_cmac(unsigned char *cmac1, unsigned char *cmac2)
 
 int write_to_file(char * filename, char* data, int length){
 	FILE * file_ptr = NULL;
-	file_ptr = fopen(filename,"w");
+	file_ptr = fopen(filename,"wb");
 	if (file_ptr==NULL) return -1;
 	//fputs(data, file_ptr);
 	fwrite(data, sizeof(char), length, file_ptr);
@@ -290,7 +290,7 @@ int write_to_file(char * filename, char* data, int length){
 	return 0;
 }
 
-const char* read_from_file(char* filename){
+char* read_from_file(char* filename, int* returned_length){
 	FILE * file_ptr = NULL;
 	int file_length = 0;
 	int counter;
@@ -299,6 +299,7 @@ const char* read_from_file(char* filename){
 
 	fseek(file_ptr,0,SEEK_END);
 	file_length = ftell(file_ptr);  // return the position of the cursor
+	*returned_length = file_length;
 	rewind(file_ptr);  // return the pointer at the beginning of the strem(file)
 
 	char * buffer = (char*)malloc(sizeof(char)*file_length+1);  
@@ -410,29 +411,51 @@ main(int argc, char **argv)
 
 
 	/* Keygen from password */
-	 unsigned char* key = (unsigned char*)malloc(1024*sizeof(char));;
-	 unsigned char* iv = (unsigned char*)malloc(1024*sizeof(char));;
+	unsigned char* key = (unsigned char*)malloc(1024*sizeof(char));;
+	unsigned char* iv = (unsigned char*)malloc(1024*sizeof(char));;
 
-	 keygen(password, key,iv,bit_mode);
+	keygen(password, key,iv,bit_mode);
 
 	char * data = (char*)malloc(1024*sizeof(char));
 	char * output = (char*)malloc(1024*sizeof(char));
+	int file_length;  // the file length is gonna be stored here by reference
+	data = read_from_file(input_file, &file_length);
+
+	if (bit_mode==128){
+		printf("[KEY]hex: \n");
+		print_hex((unsigned char *)data,128/8);
+	}
+	else{
+		printf("[KEY]hex: \n");
+		print_hex((unsigned char *)data, 256/8);
+	}
+
+	
+	
+	
 
 	/* Operate on the data according to the mode */
 	/* encrypt */
 	 if (op_mode == 0){
+	 	printf("[DATA]plaintext-ascii:\n%s\n", data);
 
+	 	encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+		write_to_file(output_file,output,strlen(output));
+
+		printf("[DATA]encrypted-hex: \n");
+		print_hex((unsigned char *)output,file_length);
 
 	 }
 
 	/* decrypt */
  	if (op_mode == 1){
-		data = read_from_file(input_file);
-		printf("Decrypt mode. File = %s, %ld bytes long.\n", data, strlen(data));
+ 		printf("[DATA]encrypted-hex: \n");
+		print_hex((unsigned char *)data,file_length);
 
-		decrypt((unsigned char*)data, strlen(data), key, iv,(unsigned char*)output,bit_mode);
-		printf("output= %s \n", output);
+		decrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
 		write_to_file(output_file,output,strlen(output));
+
+		printf("[DATA]decrypted-ascii:\n %s\n", output);
 	 }
 
 	/* sign */
