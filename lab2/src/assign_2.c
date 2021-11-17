@@ -25,7 +25,7 @@ int decrypt(unsigned char *, int, unsigned char *, unsigned char *,
 void gen_cmac(unsigned char *, size_t, unsigned char *, unsigned char *, int);
 int verify_cmac(unsigned char *, unsigned char *);
 int write_to_file( char *,  char*, int length);
-int read_from_file(char*, char*, int length);
+const char* read_from_file(char*);
 
 
 /* TODO Declare your function prototypes here... */
@@ -290,16 +290,27 @@ int write_to_file(char * filename, char* data, int length){
 	return 0;
 }
 
-int read_from_file(char* filename, char* data, int length){
+const char* read_from_file(char* filename){
 	FILE * file_ptr = NULL;
-	file_ptr = fopen(filename,"r");
-	if (file_ptr==NULL) return -1;
-	if (length != fread(data, sizeof(char), length, file_ptr)){
-		printf("Read length doesnt mach with given read length. Aborting..");
-		exit(EXIT_FAILURE);
-	}
+	int file_length = 0;
+	int counter;
+	file_ptr = fopen(filename,"rb");
+	if (file_ptr==NULL) exit(EXIT_FAILURE);
+
+	fseek(file_ptr,0,SEEK_END);
+	file_length = ftell(file_ptr);  // return the position of the cursor
+	rewind(file_ptr);  // return the pointer at the beginning of the strem(file)
+
+	char * buffer = (char*)malloc(sizeof(char)*file_length+1);  
+
+	for(counter = 0; counter < file_length; counter++) {
+       if(fread(buffer+counter, 1, 1, file_ptr)!=1){
+       	printf("ERROR while reading the file...Aborting..");
+       	exit(EXIT_FAILURE);
+       }
+    }
 	fclose(file_ptr);
-	return 0;
+	return buffer;
 }
 
 
@@ -332,10 +343,17 @@ main(int argc, char **argv)
 	bit_mode = -1;
 	op_mode = -1;
 
+	/* test code to check the I/O functions:*/
+	/*
 	write_to_file("randomfilename","this is data!",14);
-	char * returned_data = (char*)malloc(sizeof(char)*15);
-	read_from_file("randomfilename",returned_data, 14);
-	printf("This is th read string: %s\n", returned_data);
+
+	const char* buffer =(char*)malloc(1024) ;
+	buffer = read_from_file("randomfilename");
+
+	printf("This is th read string: %s\n", buffer);
+	*/
+
+	
 
 	/*
 	 * Get arguments
@@ -387,16 +405,35 @@ main(int argc, char **argv)
 
 
 
+
 	/* Initialize the library */
 
 
 	/* Keygen from password */
+	 unsigned char* key = (unsigned char*)malloc(1024*sizeof(char));;
+	 unsigned char* iv = (unsigned char*)malloc(1024*sizeof(char));;
 
+	 keygen(password, key,iv,bit_mode);
+
+	char * data = (char*)malloc(1024*sizeof(char));
+	char * output = (char*)malloc(1024*sizeof(char));
 
 	/* Operate on the data according to the mode */
 	/* encrypt */
+	 if (op_mode == 0){
+
+
+	 }
 
 	/* decrypt */
+ 	if (op_mode == 1){
+		data = read_from_file(input_file);
+		printf("Decrypt mode. File = %s, %ld bytes long.\n", data, strlen(data));
+
+		decrypt((unsigned char*)data, strlen(data), key, iv,(unsigned char*)output,bit_mode);
+		printf("output= %s \n", output);
+		write_to_file(output_file,output,strlen(output));
+	 }
 
 	/* sign */
 
