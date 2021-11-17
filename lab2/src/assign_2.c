@@ -416,10 +416,18 @@ main(int argc, char **argv)
 
 	keygen(password, key,iv,bit_mode);
 
-	char * data = (char*)malloc(1024*sizeof(char));
+	char * data_unclean = (char*)malloc(1024*sizeof(char));
+
 	char * output = (char*)malloc(1024*sizeof(char));
 	int file_length;  // the file length is gonna be stored here by reference
-	data = read_from_file(input_file, &file_length);
+
+	data_unclean = read_from_file(input_file, &file_length);
+
+
+	char * data = (char*)malloc(file_length*sizeof(char));
+	strcpy(data,data_unclean);
+
+
 
 	if (bit_mode==128){
 		printf("[KEY]hex: \n");
@@ -440,7 +448,7 @@ main(int argc, char **argv)
 	 	printf("[DATA]plaintext-ascii:\n%s\n", data);
 
 	 	encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
-		write_to_file(output_file,output,strlen(output));
+		write_to_file(output_file,output,file_length);
 
 		printf("[DATA]encrypted-hex: \n");
 		print_hex((unsigned char *)output,file_length);
@@ -453,9 +461,11 @@ main(int argc, char **argv)
 		print_hex((unsigned char *)data,file_length);
 
 		decrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
-		write_to_file(output_file,output,strlen(output));
+
+		write_to_file(output_file,output,file_length);
 
 		printf("[DATA]decrypted-ascii:\n %s\n", output);
+
 	 }
 
 	/* sign */
