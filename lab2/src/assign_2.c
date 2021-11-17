@@ -24,6 +24,8 @@ int decrypt(unsigned char *, int, unsigned char *, unsigned char *,
     unsigned char *, int);
 void gen_cmac(unsigned char *, size_t, unsigned char *, unsigned char *, int);
 int verify_cmac(unsigned char *, unsigned char *);
+int write_to_file(unsigned char *, unsigned char*);
+int read_from_file(unsigned char*, unsigned char*);
 
 
 /* TODO Declare your function prototypes here... */
@@ -84,7 +86,6 @@ usage(void)
 	    "    assign_1 -h\n"
 	);
 
-	EVP_MD = EVP_sha1("testpassword");
 	printf(
 	    "\n"
 	    "Options:\n"
@@ -97,9 +98,8 @@ usage(void)
 	    " -s            Encrypt+sign input and store results to output\n"
 	    " -v            Decrypt+verify input and store results to output\n"
 	    " -h            This help message\n"
-	    "This is the EVP_sha1(\"testpassword\"):%s \n)", EVP_MD
 	);
-	exit(EXIT_FAILURE);
+	exit(EXIT_FAILURE);  // completely exit the program and return to parent process EXIT_FAILURE
 }
 
 
@@ -159,7 +159,8 @@ keygen(unsigned char *password, unsigned char *key, unsigned char *iv,
     // set the hashing algorithm
     const EVP_MD * hashing_algorithm =  EVP_get_digestbyname("sha1");
     // the salt is null and the iteration count is 1. here the Hashing is being done
-    EVP_BytesToKey(cipher_alg, hashing_algorithm, NULL, password, strlen(password), 1 , key, iv);
+    // warning: strlen takes a const char* as argument, so we use a cast.
+    EVP_BytesToKey(cipher_alg, hashing_algorithm, NULL, password, strlen((const char*)password), 1 , key, iv);
 
     printf("\n The password entered is: %s\n", password);
     printf("\nThe hashed output from the password: %s\n", key);
@@ -183,25 +184,25 @@ encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
 	context = EVP_CIPHER_CTX_new();
 
 	if (bit_mode==128)
-      EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, iv);  
+      EVP_EncryptInit_ex(context, EVP_aes_128_ecb(), NULL, key, iv);  
     else if (bit_mode==256)
-      EVP_EncryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, key, iv); 
+      EVP_EncryptInit_ex(context, EVP_aes_256_ecb(), NULL, key, iv); 
     else{
-      printf("Wrong bitmode (%d) provided.. Exiting..", bitmode);
+      printf("Wrong bitmode (%d) provided.. Exiting..", bit_mode);
       return;
     }
 
     /* Set the content to be encrypted and get the output */
     /* some arguments are passed by reference so that the function 
     can change their values */
-    EVP_EncryptUpate(context, ciphertext, &length, plaintext, plaintext_len);
+    EVP_EncryptUpdate(context, ciphertext, &length, plaintext, plaintext_len);
     ciphertext_length += length;
 
 
     /* Finalise the encryption */
     EVP_EncryptFinal_ex(context, ciphertext + length, &length);
 
-    EVA_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_CTX_free(context);
    	// the ciphertext is returned by reference
 
 }
@@ -222,23 +223,23 @@ decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
 	EVP_CIPHER_CTX *context;
 	int length;
 
-	context = EVP_CIPHER_CTX_new()
+	context = EVP_CIPHER_CTX_new();
 
-	if (bitmode==128)
+	if (bit_mode==128)
       EVP_DecryptInit_ex(context, EVP_aes_128_ecb(), NULL, key, iv);
-    else if (bitmode==256)
+    else if (bit_mode==256)
       EVP_DecryptInit_ex(context, EVP_aes_256_ecb(), NULL, key, iv); 
     else{
-      printf("Wrong bitmode (%d) provided.. Exiting..", bitmode);
-      return;
+      printf("Wrong bitmode (%d) provided.. Exiting..", bit_mode);
+      return -1;
     }
 
-    EVP_DexryptUpdate(context,plaintext,&length,ciphertext,ciphertext_length);
+    EVP_DecryptUpdate(context,plaintext,&length,ciphertext,ciphertext_len);
     plaintext_len = length;
-    EVP_DecryptFinal_ex(context, plaintext+length, &length)
+    EVP_DecryptFinal_ex(context, plaintext+length, &length);
     plaintext_len += length;
 
-    ECP_CIPHER_CTX_free(context);
+    EVP_CIPHER_CTX_free(context);
 
 
 	return plaintext_len;
@@ -279,6 +280,13 @@ verify_cmac(unsigned char *cmac1, unsigned char *cmac2)
 
 /* TODO Develop your functions here... */
 
+int write_to_file(unsigned char * filename, unsigned char* data){
+	FILE * file_ptr = NULL;
+	file_ptr = fopen(filename,"w");
+	fputs(data, file_ptr);
+	fclose(file_ptr);
+}
+
 
 
 /*
@@ -308,6 +316,7 @@ main(int argc, char **argv)
 	password = NULL;
 	bit_mode = -1;
 	op_mode = -1;
+	write_to_file("filenamerandom",  "random data");
 
 
 	/*

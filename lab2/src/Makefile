@@ -3,7 +3,7 @@ DBUG = -g
 CCFLAGS = -O2 -Wall -pedantic
 LIBSSL = -lssl -lcrypto
 
-TARGETS = assign_1
+TARGETS = assign_2
 
 
 all: $(TARGETS)
