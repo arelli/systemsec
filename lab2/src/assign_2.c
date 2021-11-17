@@ -24,8 +24,8 @@ int decrypt(unsigned char *, int, unsigned char *, unsigned char *,
     unsigned char *, int);
 void gen_cmac(unsigned char *, size_t, unsigned char *, unsigned char *, int);
 int verify_cmac(unsigned char *, unsigned char *);
-int write_to_file(unsigned char *, unsigned char*);
-int read_from_file(unsigned char*, unsigned char*);
+int write_to_file( char *,  char*, int length);
+int read_from_file(char*, char*, int length);
 
 
 /* TODO Declare your function prototypes here... */
@@ -280,11 +280,26 @@ verify_cmac(unsigned char *cmac1, unsigned char *cmac2)
 
 /* TODO Develop your functions here... */
 
-int write_to_file(unsigned char * filename, unsigned char* data){
+int write_to_file(char * filename, char* data, int length){
 	FILE * file_ptr = NULL;
 	file_ptr = fopen(filename,"w");
-	fputs(data, file_ptr);
+	if (file_ptr==NULL) return -1;
+	//fputs(data, file_ptr);
+	fwrite(data, sizeof(char), length, file_ptr);
 	fclose(file_ptr);
+	return 0;
+}
+
+int read_from_file(char* filename, char* data, int length){
+	FILE * file_ptr = NULL;
+	file_ptr = fopen(filename,"r");
+	if (file_ptr==NULL) return -1;
+	if (length != fread(data, sizeof(char), length, file_ptr)){
+		printf("Read length doesnt mach with given read length. Aborting..");
+		exit(EXIT_FAILURE);
+	}
+	fclose(file_ptr);
+	return 0;
 }
 
 
@@ -316,8 +331,11 @@ main(int argc, char **argv)
 	password = NULL;
 	bit_mode = -1;
 	op_mode = -1;
-	write_to_file("filenamerandom",  "random data");
 
+	write_to_file("randomfilename","this is data!",14);
+	char * returned_data = (char*)malloc(sizeof(char)*15);
+	read_from_file("randomfilename",returned_data, 14);
+	printf("This is th read string: %s\n", returned_data);
 
 	/*
 	 * Get arguments
