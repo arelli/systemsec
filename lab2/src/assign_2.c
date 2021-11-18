@@ -424,16 +424,9 @@ main(int argc, char **argv)
 	/* check arguments */
 	check_args(input_file, output_file, password, bit_mode, op_mode);
 
-
-
 	/* TODO Develop the logic of your tool here... */
 
-
-
-
-
 	/* Initialize the library */
-
 
 	/* Keygen from password */
 	unsigned char* key = (unsigned char*)malloc(16*sizeof(char));  // cmac key is always 16 bytes
@@ -446,15 +439,16 @@ main(int argc, char **argv)
 
 	int file_length;  // the file length is gonna be stored here by reference
 	int ciphertext_length;
-
+	/*
 	temp = read_from_file(input_file, &file_length);
-	char * data =(char*)malloc(file_length);
+	char * data =(char*)malloc(sizeof(char)*file_length);
 	memcpy(data,temp,file_length+1);
-
+	*/
+	char* data = (char*)malloc(4096);
+	data = read_from_file(input_file, &file_length);
 
 
 // for the verification and signing
-	int cmaced_output;
 	unsigned char *cmac_output;
 
 
@@ -479,7 +473,7 @@ main(int argc, char **argv)
 		printf("[DATA]encrypted-hex:(length = %d) \n", file_length);
 		print_hex((unsigned char *)output,file_length);
 
-
+		write_to_file(output_file,output,file_length);
 	 }
 
 
@@ -490,30 +484,39 @@ main(int argc, char **argv)
 		decrypt((unsigned char*)data, file_length, key, NULL,(unsigned char*)output,bit_mode);
 
 		printf("[DATA]decrypted-ascii:\n%s\n", output);
+
+		write_to_file(output_file,output,file_length);
 	 }
-
-
 
 
 
 	/* sign - no else if here!!!*/
 	if (op_mode == 2){
-		/*
-		all memory is statically declared, to max 1024 bytes. TODO: convert it to 
-		dynamical using malloc with apropriately computed sizes.
-		*/
-		encrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
 		// calculate length of output after the CMAC addition
-		cmaced_output = BLOCK_SIZE -(file_length%BLOCK_SIZE);
+		//cmaced_output = BLOCK_SIZE -(file_length%BLOCK_SIZE);
 		// allocate space for the cmac output
 		cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
 
 		//unsigned char *total_output= (unsigned char*)malloc(cmaced_output*sizeof(char));
 
 		gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
-		printf("[CMAC] is: %s and cmaced_output is %d \n", cmac_output, cmaced_output);
+		printf("[CMAC]cmac in ASCII is %s HEX is: \n",cmac_output);
 		print_hex(cmac_output, BLOCK_SIZE);
+
+
+		ciphertext_length = encrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
+
 		
+		char * out_buf = (char*)malloc(sizeof(char)*4096) ;
+		int counter = 0;
+		// copy the ciphertext in the buffer
+		for(counter=0;counter<ciphertext_length;counter++)
+			out_buf[counter] = output[counter];
+		// copy the CMAC at the end of the buffer
+		for (counter = 0; counter < BLOCK_SIZE; counter++)
+			out_buf[ciphertext_length + counter] = cmac_output[counter];
+
+		write_to_file(output_file,out_buf,ciphertext_length + BLOCK_SIZE);
 
 	 }
 
@@ -531,19 +534,6 @@ main(int argc, char **argv)
 	 	}
 	 	print_hex((unsigned char*)cmac, BLOCK_SIZE);
 	 }
-
-
-
-
-
-	/* verify */
-
-
-	 /*write all*/
-	write_to_file(output_file,output,file_length);	
-	if (op_mode == 2) append_to_file(output_file,(char*)cmac_output, cmaced_output);
-
-
 
 
 	/* Clean up */
