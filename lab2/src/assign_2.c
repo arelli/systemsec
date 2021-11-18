@@ -283,14 +283,9 @@ gen_cmac(unsigned char *data, size_t data_len, unsigned char *key,  unsigned cha
 int
 verify_cmac(unsigned char *cmac1, unsigned char *cmac2)
 {
-	int verify;
-
-	verify = 0;
-
 	/* TODO Task E */
-	printf("Task E not implemented yet... Exiting");
-
-	return verify;
+	return strcmp((const char*)cmac1,(const char*)cmac2);
+	 // if they match, return 1
 }
 
 
@@ -479,23 +474,17 @@ main(int argc, char **argv)
 
 		printf("[DATA]decrypted-ascii:\n %s\n", output);
 	 }
-	 else if ((op_mode == 2)  || (op_mode==3)){
-	 	// calculate the size of the output(use blocksize)
+	/* sign */
+	else if (op_mode == 2){
+		// calculate the size of the output(use blocksize)
 
-	 	// allocate space for the cmac output
-	 	unsigned char *cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
-	 	gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
-	 	printf("[CMAC] is: %s\n", cmac_output);
-	 	//
+		// allocate space for the cmac output
+		unsigned char *cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
+		gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
+		printf("[CMAC] is: %s\n", cmac_output);
+		//
 
 	 }
-
-
-
-
-
-	/* sign */
-
 	/* verify */
 		
 
