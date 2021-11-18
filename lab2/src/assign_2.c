@@ -439,13 +439,10 @@ main(int argc, char **argv)
 
 	int file_length;  // the file length is gonna be stored here by reference
 	int ciphertext_length;
-	/*
+
 	temp = read_from_file(input_file, &file_length);
 	char * data =(char*)malloc(sizeof(char)*file_length);
 	memcpy(data,temp,file_length+1);
-	*/
-	char* data = (char*)malloc(4096);
-	data = read_from_file(input_file, &file_length);
 
 
 // for the verification and signing
@@ -499,7 +496,7 @@ main(int argc, char **argv)
 
 		//unsigned char *total_output= (unsigned char*)malloc(cmaced_output*sizeof(char));
 
-		gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
+		gen_cmac((unsigned char*)data,strlen((const char*)data), key, cmac_output, bit_mode);
 		printf("[CMAC]cmac in ASCII is %s HEX is: \n",cmac_output);
 		print_hex(cmac_output, BLOCK_SIZE);
 
@@ -515,7 +512,7 @@ main(int argc, char **argv)
 		// copy the CMAC at the end of the buffer
 		for (counter = 0; counter < BLOCK_SIZE; counter++)
 			out_buf[ciphertext_length + counter] = cmac_output[counter];
-
+		// write the buffer at the end of the file!
 		write_to_file(output_file,out_buf,ciphertext_length + BLOCK_SIZE);
 
 	 }
