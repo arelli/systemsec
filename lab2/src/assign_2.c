@@ -18,7 +18,7 @@ void print_string(unsigned char *, size_t);
 void usage(void);
 void check_args(char *, char *, unsigned char *, int, int);
 void keygen(unsigned char *, unsigned char *, unsigned char *, int);
-void encrypt(unsigned char *, int, unsigned char *, unsigned char *, 
+int encrypt(unsigned char *, int, unsigned char *, unsigned char *, 
     unsigned char *, int );
 int decrypt(unsigned char *, int, unsigned char *, unsigned char *, 
     unsigned char *, int);
@@ -171,14 +171,12 @@ keygen(unsigned char *password, unsigned char *key, unsigned char *iv,
 /*
  * Encrypts the data
  */
-void
-encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
+int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
     unsigned char *iv, unsigned char *ciphertext, int bit_mode)
 {
-
 	EVP_CIPHER_CTX* context;
 
-	int length, ciphertext_length;
+	int length, padding_len;
 
 	/*initialise the context*/
 	context = EVP_CIPHER_CTX_new();
@@ -189,21 +187,23 @@ encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
       EVP_EncryptInit_ex(context, EVP_aes_256_ecb(), NULL, key, iv); 
     else{
       printf("Wrong bitmode (%d) provided.. Exiting..", bit_mode);
-      return;
+      return -1;
     }
 
     /* Set the content to be encrypted and get the output */
     /* some arguments are passed by reference so that the function 
     can change their values */
     EVP_EncryptUpdate(context, ciphertext, &length, plaintext, plaintext_len);
-    ciphertext_length += length;
+
 
 
     /* Finalise the encryption */
-    EVP_EncryptFinal_ex(context, ciphertext + length, &length);
+    EVP_EncryptFinal_ex(context, ciphertext + length, &padding_len);
+    plaintext_len += padding_len;
 
     EVP_CIPHER_CTX_free(context);
    	// the ciphertext is returned by reference
+   	return plaintext_len;
 
 }
 
@@ -236,8 +236,9 @@ decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
 
     EVP_DecryptUpdate(context,plaintext,&length,ciphertext,ciphertext_len);
     plaintext_len = length;
+
     EVP_DecryptFinal_ex(context, plaintext+length, &length);
-    plaintext_len += length;
+    plaintext_len = length;
 
     EVP_CIPHER_CTX_free(context);
 
@@ -435,21 +436,21 @@ main(int argc, char **argv)
 
 
 	/* Keygen from password */
-	unsigned char* key = (unsigned char*)malloc(1024*sizeof(char));;
-	unsigned char* iv = (unsigned char*)malloc(1024*sizeof(char));;
+	unsigned char* key = (unsigned char*)malloc(16*sizeof(char));  // cmac key is always 16 bytes
 
-	keygen(password, key,iv,bit_mode);
+	keygen(password, key,NULL,bit_mode);
 
-	char * data_unclean = (char*)malloc(1024*sizeof(char));
-
+	char * temp = (char*)malloc(4096*sizeof(char));
 	char * output = (char*)malloc(1024*sizeof(char));  // TODO: do (input_length%block_size)+input_length(and + blocksize, if cmac)
+
+
 	int file_length;  // the file length is gonna be stored here by reference
+	int ciphertext_length;
 
-	data_unclean = read_from_file(input_file, &file_length);
+	temp = read_from_file(input_file, &file_length);
+	char * data =(char*)malloc(file_length);
+	memcpy(data,temp,file_length+1);
 
-
-	char * data = (char*)malloc(file_length*sizeof(char));
-	strcpy(data,data_unclean);
 
 
 // for the verification and signing
@@ -459,29 +460,40 @@ main(int argc, char **argv)
 
 	if (bit_mode==128){
 		printf("[KEY]hex: \n");
-		print_hex((unsigned char *)data,128/8);
+		print_hex((unsigned char *)key,128/8);
 	}
 	else{
 		printf("[KEY]hex: \n");
-		print_hex((unsigned char *)data, 256/8);
+		print_hex((unsigned char *)key, 256/8);
 	}
 	
 
 	/* Operate on the data according to the mode */
 	/* encrypt */
 	if (op_mode == 0){
-	 	encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+	 	ciphertext_length = encrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
 
-		printf("[DATA]encrypted-hex: \n");
+	 	file_length = ciphertext_length;
+
+		printf("[DATA]encrypted-hex:(length = %d) \n", file_length);
 		print_hex((unsigned char *)output,file_length);
 
 	 }
+
+
+
+
 	/* decrypt */
  	else if (op_mode == 1){
-		decrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+		decrypt((unsigned char*)data, file_length, key, NULL,(unsigned char*)output,bit_mode);
 
 		printf("[DATA]decrypted-ascii:\n %s\n", output);
+		print_hex(output, file_length);
 	 }
+
+
+
+
 
 	/* sign - no else if here!!!*/
 	if (op_mode == 2){
@@ -489,7 +501,7 @@ main(int argc, char **argv)
 		all memory is statically declared, to max 1024 bytes. TODO: convert it to 
 		dynamical using malloc with apropriately computed sizes.
 		*/
-		encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+		encrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
 		// calculate length of output after the CMAC addition
 		cmaced_output = BLOCK_SIZE -(file_length%BLOCK_SIZE);
 		// allocate space for the cmac output
@@ -503,8 +515,12 @@ main(int argc, char **argv)
 		
 
 	 }
+
+
+
+
 	 else if (op_mode == 3){
-	 	decrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+	 	decrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
 	 	cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
 	 	gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
 	 	char* cmac = (char *)malloc(sizeof(char)*BLOCK_SIZE);
@@ -514,12 +530,21 @@ main(int argc, char **argv)
 	 	}
 	 	print_hex((unsigned char*)cmac, BLOCK_SIZE);
 	 }
+
+
+
+
+
 	/* verify */
 
 
 	 /*write all*/
 	write_to_file(output_file,output,file_length);	
 	if (op_mode == 2) append_to_file(output_file,(char*)cmac_output, cmaced_output);
+
+
+
+
 	/* Clean up */
 	free(input_file);
 	free(output_file);
