@@ -250,13 +250,30 @@ decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
  * Generates a CMAC
  */
 void
-gen_cmac(unsigned char *data, size_t data_len, unsigned char *key, 
-    unsigned char *cmac, int bit_mode)
+gen_cmac(unsigned char *data, size_t data_len, unsigned char *key,  unsigned char *cmac, int bit_mode)
 {
 
 	/* TODO Task D */
-	printf("Task D not implemented yet... Exiting");
+	CMAC_CTX *context ; 
+	context = CMAC_CTX_new();
+	size_t extrabytes;  // how many new bytes will be added by the cmac
 
+	const EVP_CIPHER *cipher;
+
+	if (bit_mode == 128)
+		cipher = EVP_aes_128_ecb();
+	else 
+		cipher = EVP_aes_256_ecb();
+
+	CMAC_Init(context,key,bit_mode/8,cipher, NULL);
+
+	CMAC_Update(context, data, data_len);
+
+	CMAC_Final(context, cmac, &extrabytes);
+
+	*(cmac+BLOCK_SIZE) = '\0';  // terminate the created string
+
+	CMAC_CTX_free(context);
 }
 
 
@@ -437,14 +454,11 @@ main(int argc, char **argv)
 		printf("[KEY]hex: \n");
 		print_hex((unsigned char *)data, 256/8);
 	}
-
-	
-	
 	
 
 	/* Operate on the data according to the mode */
 	/* encrypt */
-	 if (op_mode == 0){
+	if (op_mode == 0){
 	 	printf("[DATA]plaintext-ascii:\n%s\n", data);
 
 	 	encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
@@ -454,9 +468,8 @@ main(int argc, char **argv)
 		print_hex((unsigned char *)output,file_length);
 
 	 }
-
 	/* decrypt */
- 	if (op_mode == 1){
+ 	else if (op_mode == 1){
  		printf("[DATA]encrypted-hex: \n");
 		print_hex((unsigned char *)data,file_length);
 
@@ -465,8 +478,21 @@ main(int argc, char **argv)
 		write_to_file(output_file,output,file_length);
 
 		printf("[DATA]decrypted-ascii:\n %s\n", output);
+	 }
+	 else if ((op_mode == 2)  || (op_mode==3)){
+	 	// calculate the size of the output(use blocksize)
+
+	 	// allocate space for the cmac output
+	 	unsigned char *cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
+	 	gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
+	 	printf("[CMAC] is: %s\n", cmac_output);
+	 	//
 
 	 }
+
+
+
+
 
 	/* sign */
 
