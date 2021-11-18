@@ -302,6 +302,18 @@ int write_to_file(char * filename, char* data, int length){
 	return 0;
 }
 
+
+int append_to_file(char * filename, char* data, int length){
+	FILE * file_ptr = NULL;
+	file_ptr = fopen(filename,"ab");
+	if (file_ptr==NULL) return -1;
+	//fputs(data, file_ptr);
+	fwrite(data, sizeof(char), length, file_ptr);
+	fclose(file_ptr);
+	return 0;
+}
+
+
 char* read_from_file(char* filename, int* returned_length){
 	FILE * file_ptr = NULL;
 	int file_length = 0;
@@ -430,7 +442,7 @@ main(int argc, char **argv)
 
 	char * data_unclean = (char*)malloc(1024*sizeof(char));
 
-	char * output = (char*)malloc(1024*sizeof(char));
+	char * output = (char*)malloc(1024*sizeof(char));  // TODO: do (input_length%block_size)+input_length(and + blocksize, if cmac)
 	int file_length;  // the file length is gonna be stored here by reference
 
 	data_unclean = read_from_file(input_file, &file_length);
@@ -439,6 +451,10 @@ main(int argc, char **argv)
 	char * data = (char*)malloc(file_length*sizeof(char));
 	strcpy(data,data_unclean);
 
+
+// for the verification and signing
+	int cmaced_output;
+	unsigned char *cmac_output;
 
 
 	if (bit_mode==128){
@@ -454,10 +470,7 @@ main(int argc, char **argv)
 	/* Operate on the data according to the mode */
 	/* encrypt */
 	if (op_mode == 0){
-	 	printf("[DATA]plaintext-ascii:\n%s\n", data);
-
 	 	encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
-		write_to_file(output_file,output,file_length);
 
 		printf("[DATA]encrypted-hex: \n");
 		print_hex((unsigned char *)output,file_length);
@@ -465,29 +478,48 @@ main(int argc, char **argv)
 	 }
 	/* decrypt */
  	else if (op_mode == 1){
- 		printf("[DATA]encrypted-hex: \n");
-		print_hex((unsigned char *)data,file_length);
-
 		decrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
-
-		write_to_file(output_file,output,file_length);
 
 		printf("[DATA]decrypted-ascii:\n %s\n", output);
 	 }
-	/* sign */
-	else if (op_mode == 2){
-		// calculate the size of the output(use blocksize)
 
+	/* sign - no else if here!!!*/
+	if (op_mode == 2){
+		/*
+		all memory is statically declared, to max 1024 bytes. TODO: convert it to 
+		dynamical using malloc with apropriately computed sizes.
+		*/
+		encrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+		// calculate length of output after the CMAC addition
+		cmaced_output = BLOCK_SIZE -(file_length%BLOCK_SIZE);
 		// allocate space for the cmac output
-		unsigned char *cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
-		gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
-		printf("[CMAC] is: %s\n", cmac_output);
-		//
+		cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
 
-	 }
-	/* verify */
+		//unsigned char *total_output= (unsigned char*)malloc(cmaced_output*sizeof(char));
+
+		gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
+		printf("[CMAC] is: %s and cmaced_output is %d \n", cmac_output, cmaced_output);
+		print_hex(cmac_output, BLOCK_SIZE);
 		
 
+	 }
+	 else if (op_mode == 3){
+	 	decrypt((unsigned char*)data, file_length, key, iv,(unsigned char*)output,bit_mode);
+	 	cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
+	 	gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
+	 	char* cmac = (char *)malloc(sizeof(char)*BLOCK_SIZE);
+	 	int counter = 0;
+	 	for(counter=0;counter<BLOCK_SIZE;counter++){
+	 		*(cmac+counter) = *(output+file_length-counter);
+	 	}
+	 	print_hex((unsigned char*)cmac, BLOCK_SIZE);
+	 }
+	/* verify */
+
+
+	 /*write all*/
+	write_to_file(output_file,output,file_length);	
+	if (op_mode == 2) append_to_file(output_file,(char*)cmac_output, cmaced_output);
 	/* Clean up */
 	free(input_file);
 	free(output_file);
