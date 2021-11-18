@@ -199,7 +199,7 @@ int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
 
     /* Finalise the encryption */
     EVP_EncryptFinal_ex(context, ciphertext + length, &padding_len);
-    plaintext_len += padding_len;
+    plaintext_len += padding_len;  /* IMPORTANT!!: this adds the padding length to the overall, returned length!*/
 
     EVP_CIPHER_CTX_free(context);
    	// the ciphertext is returned by reference
@@ -473,10 +473,12 @@ main(int argc, char **argv)
 	if (op_mode == 0){
 	 	ciphertext_length = encrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
 
+	 	
 	 	file_length = ciphertext_length;
 
 		printf("[DATA]encrypted-hex:(length = %d) \n", file_length);
 		print_hex((unsigned char *)output,file_length);
+
 
 	 }
 
@@ -487,8 +489,7 @@ main(int argc, char **argv)
  	else if (op_mode == 1){
 		decrypt((unsigned char*)data, file_length, key, NULL,(unsigned char*)output,bit_mode);
 
-		printf("[DATA]decrypted-ascii:\n %s\n", output);
-		print_hex(output, file_length);
+		printf("[DATA]decrypted-ascii:\n%s\n", output);
 	 }
 
 
