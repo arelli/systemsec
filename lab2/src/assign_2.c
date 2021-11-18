@@ -518,18 +518,37 @@ main(int argc, char **argv)
 	 }
 
 
-
-
 	 else if (op_mode == 3){
+
+	 	char *temp = (char*)malloc(sizeof(char)*strlen(data));
+	 	temp = data;
+
+
 	 	decrypt((unsigned char*)data, file_length, key, NULL ,(unsigned char*)output,bit_mode);
+
+	 	printf("\n[VCMAC] Decrypted text: %s\n", data);
+
+	 	// get the cmac from the decrypted plaintext
 	 	cmac_output = (unsigned char*)malloc(BLOCK_SIZE*sizeof(char));
-	 	gen_cmac((unsigned char*)data,BLOCK_SIZE+file_length, key, cmac_output, bit_mode);
+
+	 	gen_cmac((unsigned char*)data,strlen((const char*)data), key, cmac_output, bit_mode);
+
+
+
+
+
+	 	// get cmac from un-decrypted file
 	 	char* cmac = (char *)malloc(sizeof(char)*BLOCK_SIZE);
 	 	int counter = 0;
+	 	// start from the 16th from the end digit, until the end and copy them
 	 	for(counter=0;counter<BLOCK_SIZE;counter++){
-	 		*(cmac+counter) = *(output+file_length-counter);
+	 		*(cmac+counter) = *(temp+strlen(data)-BLOCK_SIZE + counter);
 	 	}
+	 	printf("[VCMAC] file cmac: ");
 	 	print_hex((unsigned char*)cmac, BLOCK_SIZE);
+	 	printf("\n[VCMAC] generated cmac: ");
+	 	print_hex((unsigned char*)cmac_output, BLOCK_SIZE);
+	 	printf("\n");
 	 }
 
 
