@@ -41,11 +41,18 @@ fopen(const char *path, const char *mode)
 	/*dummy write to the file*/
 	int action_denied = 0;
 	int access_type =  1;
-	int time = 1630;
+
 	char* fingerprint = "13219f13031g138d";
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
 	int uid = getuid();
-	sprintf(output, "%d,%s,%d,%d,%d,%s\n", uid, path,time,access_type,action_denied, fingerprint);
+	
+	time_t raw_time;
+	struct tm * timeinfo;
+	time ( &raw_time );
+  	timeinfo = localtime ( &raw_time );
+
+
+	sprintf(output, "%d,%s,%d,%d,%s, %s", uid, path, access_type,action_denied, fingerprint, asctime(timeinfo));
 	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);
 
 
