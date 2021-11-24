@@ -23,18 +23,9 @@ fopen(const char *path, const char *mode)
 	/* get the pointer to the original fopen we wrap: */
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
 
-
-	
-	 
-
-	/* find the original fopen */
-	FILE * file_ptr;
-	file_ptr = (*original_fopen)("log", "a");
-
 	/* find the original fwrite */
 	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
-
 
 
 	/* H A S I N G  A L G O R I T H M */
@@ -50,19 +41,16 @@ fopen(const char *path, const char *mode)
 			printf("Could not access file to generate md5 hash... Exiting...");
 			return 0;
 		}
-
+		// send the cursor to the end of the file, measure length, and return it at the beginning
 		fseek(original_fopen_ret, 0, SEEK_END);
 		filesize =10; //  ftell(original_fopen_ret);
 		fseek(original_fopen_ret, 0, SEEK_SET);
 
-		buf = malloc(filesize);
+		buf = malloc(filesize);  // now that we know the filesize, we can allocate a buffer to hold it
 		fread(buf, filesize, 1, original_fopen_ret);
 
-		printf("[MD5] buf=%s, and filesize = %ld\n",buf, filesize);
-
-		hash = malloc(MD5_DIGEST_LENGTH);
-		MD5(buf, filesize, hash);
-		printf("\n");
+		hash = malloc(MD5_DIGEST_LENGTH);  // hash length is always the same
+		MD5(buf, filesize, hash);  // MD5 is actually produced here
 		free(buf);
 		fclose(original_fopen_ret);
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -81,6 +69,11 @@ fopen(const char *path, const char *mode)
 
 
 	/* write to log file*/
+
+	/* find the original fopen */
+	FILE * file_ptr;
+	file_ptr = (*original_fopen)("log", "a");
+
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
 	int uid = getuid();
 
