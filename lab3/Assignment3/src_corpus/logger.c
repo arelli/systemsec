@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <openssl/md5.h>
 
+#include <errno.h>
+
 int get_uid_of_file(const char * filename){
 	int uid;
 	uid = getuid();  // returns UID of the current(calling) process.
@@ -30,16 +32,21 @@ fopen(const char *path, const char *mode)
 	/* call the original fopen function */
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
 	original_fopen_ret = (*original_fopen)(path, mode);
+	int action_denied = 0;
+	if(errno == EACCES  && original_fopen_ret == NULL){  // the error code returned by fopen, EACCESS= not sufficient priviledges
+		action_denied = 1;
+	}
+
 
 
 	/* find the original fopen */
 	FILE * file_ptr;
 	file_ptr = (*original_fopen)("log", "a");
+
 	/* find the original fwrite */
 	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
 	/*dummy write to the file*/
-	int action_denied = 0;
 	int access_type =  1;
 
 	char* fingerprint = "13219f13031g138d";
@@ -52,14 +59,14 @@ fopen(const char *path, const char *mode)
   	timeinfo = localtime ( &raw_time );
 
 
-	sprintf(output, "%d,%s,%d,%d,%s, %s", uid, path, access_type,action_denied, fingerprint, asctime(timeinfo));
+	sprintf(output, "%d,%s,%d,%d,%s, %s", uid, path, access_type, action_denied, fingerprint, asctime(timeinfo));
 	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);
 
 
 	/* add your code here */
-	// get UID of file
-	// Get filename
-	// Get timestamp
+	// get UID of file X
+	// Get filename X
+	// Get timestamp X
 	// Access type(file creation = 0, file open = 1, file write = 2)
 	// Is-Action-denied flag(user with no priviledges tried to access it)
 	// File Fingerprint(i can use md5 hash function openssl)
