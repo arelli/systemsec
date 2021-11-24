@@ -39,10 +39,14 @@ fopen(const char *path, const char *mode)
 	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
 	/*dummy write to the file*/
-	char * string = "abcd";
-	(*original_fwrite)(string,strlen(string),sizeof(char),file_ptr);
-	char * comma = "";
-	(*original_fwrite)(",",1,1,file_ptr);
+	int action_denied = 0;
+	int access_type =  1;
+	int time = 1630;
+	char* fingerprint = "13219f13031g138d";
+	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
+	int uid = getuid();
+	sprintf(output, "%d,%s,%d,%d,%d,%s\n", uid, path,time,access_type,action_denied, fingerprint);
+	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);
 
 
 	/* add your code here */
