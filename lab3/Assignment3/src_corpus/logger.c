@@ -62,10 +62,6 @@ fopen(const char *path, const char *mode)
 
 		hash = malloc(MD5_DIGEST_LENGTH);
 		MD5(buf, filesize, hash);
-		printf("MD5 (%s) = ", path);
-		for (i=0; i < MD5_DIGEST_LENGTH; i++){
-			printf("%02x",  hash[i]);
-		}
 		printf("\n");
 		free(buf);
 		fclose(original_fopen_ret);
@@ -73,7 +69,7 @@ fopen(const char *path, const char *mode)
 	}
 	else{
 		access_type = 0;  // file creation(file did not exist)
-		hash = (unsigned char*)"d41d8cd98f00b204e9800998ecf8427e"; 
+		hash = (unsigned char*)"d41d8cd98f00b204e9800998ecf8427e"; // md5 for empty file
 	}
 		
 
@@ -88,8 +84,12 @@ fopen(const char *path, const char *mode)
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
 	int uid = getuid();
 
-	sprintf(output, "uid:%d, %s, access:%d, denied:%d, %s, %s", uid, path, access_type, action_denied, hash, asctime(timeinfo));
-	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);
+	sprintf(output, "uid:%d, %s, access:%d, denied:%d,", uid, path, access_type, action_denied);
+	for (i=0; i < MD5_DIGEST_LENGTH; i++){
+			sprintf(output+strlen(output), "%02x",  hash[i]);
+	}
+	sprintf(output + strlen(output), ", %s", asctime(timeinfo));  // add the strlen of output, to ont overwrite the previous data
+	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);  // actually write the data to log file
 
 
 	/* call the original fopen function */
