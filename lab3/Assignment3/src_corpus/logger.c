@@ -19,21 +19,13 @@ fopen(const char *path, const char *mode)
 	FILE *original_fopen_ret;
 	FILE *(*original_fopen)(const char*, const char*);
 	int action_denied = 0;
-	int access_type =  1;  // file open
+	int access_type =  1;  // action = file open
 	/* get the pointer to the original fopen we wrap: */
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
 
 
 	
-	if( access( path, F_OK ) != 0 ) {  // if file does not exist...
-		access_type = 0;  // file creation
-	} 
-
-	/* call the original fopen function */
-	original_fopen_ret = (*original_fopen)(path, mode);
-	if(errno == EACCES  && original_fopen_ret == NULL){  // the error code returned by fopen, EACCESS= not sufficient priviledges
-		action_denied = 1;
-	}
+	 
 
 	/* find the original fopen */
 	FILE * file_ptr;
@@ -43,37 +35,47 @@ fopen(const char *path, const char *mode)
 	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
 
+
+
 	/* H A S I N G  A L G O R I T H M */
-	FILE *fh;
 	long filesize;
 	unsigned char *buf;
 	unsigned char *hash = NULL;
 	int i;
 
-	fh = (*original_fopen)(path, "r");
+	if( access( path, F_OK ) == 0 ) {  // if file does exist...	
+		/* call the original fopen function */
+		original_fopen_ret = (*original_fopen)(path, "rb");
+		if (original_fopen_ret==NULL){
+			printf("Could not access file to generate md5 hash... Exiting...");
+			return 0;
+		}
 
-	fseek(fh, 0L, SEEK_END);
-	filesize = ftell(fh);
-	fseek(fh, 0L, SEEK_SET);
+		fseek(original_fopen_ret, 0, SEEK_END);
+		filesize =10; //  ftell(original_fopen_ret);
+		fseek(original_fopen_ret, 0, SEEK_SET);
 
-	buf = malloc(filesize);
-	fread(buf, filesize, 1, fh);
-	fclose(fh);
+		buf = malloc(filesize);
+		fread(buf, filesize, 1, original_fopen_ret);
 
-	hash = malloc(MD5_DIGEST_LENGTH);
-	MD5(buf, filesize, hash);
-	printf("MD5 (%s) = ", path);
-	for (i=0; i < MD5_DIGEST_LENGTH; i++){
-		printf("%02x",  hash[i]);
+		printf("[MD5] buf=%s, and filesize = %ld\n",buf, filesize);
+
+		hash = malloc(MD5_DIGEST_LENGTH);
+		MD5(buf, filesize, hash);
+		printf("MD5 (%s) = ", path);
+		for (i=0; i < MD5_DIGEST_LENGTH; i++){
+			printf("%02x",  hash[i]);
+		}
+		printf("\n");
+		free(buf);
+		fclose(original_fopen_ret);
+		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	}
-	printf("\n");
-	//free(hash);
-	free(buf);
-	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-	/*dummy write to the file*/
-	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
-	int uid = getuid();
+	else{
+		access_type = 0;  // file creation(file did not exist)
+		hash = (unsigned char*)"d41d8cd98f00b204e9800998ecf8427e"; 
+	}
+		
 
 	/* get time */
 	time_t raw_time;
@@ -81,8 +83,20 @@ fopen(const char *path, const char *mode)
 	time ( &raw_time );
   	timeinfo = localtime ( &raw_time );
 
+
+	/* write to log file*/
+	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
+	int uid = getuid();
+
 	sprintf(output, "uid:%d, %s, access:%d, denied:%d, %s, %s", uid, path, access_type, action_denied, hash, asctime(timeinfo));
 	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);
+
+
+	/* call the original fopen function */
+	original_fopen_ret = (*original_fopen)(path, mode);
+	if(errno == EACCES  && original_fopen_ret == NULL){  // the error code returned by fopen, EACCESS= not sufficient priviledges
+		action_denied = 1;
+	}
 
 	return original_fopen_ret;
 }
