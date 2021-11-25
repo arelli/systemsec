@@ -98,7 +98,6 @@ fopen(const char *path, const char *mode)
 size_t 
 fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) 
 {
-	FILE *original_fopen_ret;
 	FILE *(*original_fopen)(const char*, const char*);
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
 	int action_denied = 0;
@@ -125,11 +124,8 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 
 
-
-
 	size_t original_fwrite_ret;
 	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
-
 
 	/* call the original fwrite function */
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
@@ -145,30 +141,24 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 	unsigned char *hash = NULL;
 	int i;
 
-	original_fopen_ret = (*original_fopen)(path, "rb");
-	if (original_fopen_ret==NULL){
-			printf("Could not access file to generate md5 hash... Exiting...");
-			return 0;
-	}
-
-	fseek(original_fopen_ret, 0, SEEK_END);
+	fseek(stream, 0, SEEK_END);
 	filesize =10; //  ftell(original_fopen_ret);
-	fseek(original_fopen_ret, 0, SEEK_SET);
+	fseek(stream, 0, SEEK_SET);
 
 	buf = malloc(filesize);  // now that we know the filesize, we can allocate a buffer to hold it
-	fread(buf, filesize, 1, original_fopen_ret);
+	fread(buf, filesize, 1, stream);
 
 	hash = malloc(MD5_DIGEST_LENGTH);  // hash length is always the same
 	MD5(buf, filesize, hash);  // MD5 is actually produced here
 	free(buf);
-	fclose(original_fopen_ret);
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~end of hashing~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 
 	/* get time */
 	time_t raw_time;
 	struct tm * timeinfo;
 	time ( &raw_time );
   	timeinfo = localtime ( &raw_time );
-
 
 
 	/* find the original fopen */
