@@ -12,6 +12,36 @@
 #include <errno.h>  // to get access-denied errno from fopen
 #include <unistd.h>  // to check if a file exists in the same dir
 
+/* returns the full path of the file, from the file pointer.
+ * works by getting the file descriptor using fileno(), and 
+ * then the path of the proclink. This is Unix specific!! 
+ * In the end, it returns the file path using readlink().
+ * the "path" string is allocated inside the function.
+ */
+const char* get_path_from_fp(FILE* file_ptr){
+	/* Get the file descriptor-> and then the path */
+	int fno;  // stores the file descriptor from fileno()
+	int MAXSIZE = 0xFFF;
+	char proclnk[0xFFF];  // the link is stored here
+	char *path = (char*)malloc(0xFFF);  // the filepath to return is stored here
+	ssize_t r;  // stores the number of bytes returned by readlink()
+
+	fno = fileno(file_ptr);  // the file pointer, from arguments
+	sprintf(proclnk, "/proc/self/fd/%d", fno);  // works on Unix OS's only!Creates the full path of the proc link
+
+	r = readlink(proclnk, path, MAXSIZE);  
+    if (  r < 0){
+        printf("failed to readlink()! Exiting..\n");
+        exit(1);
+    }
+    path[r] = '\0';
+    return path;
+}
+
+const char* get_md5_from_fp(FILE * file_ptr){
+	// nop.
+}
+
 
 FILE *
 fopen(const char *path, const char *mode) 
@@ -77,19 +107,19 @@ fopen(const char *path, const char *mode)
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
 	int uid = getuid();
 
-	sprintf(output, "uid:%d, %s, access:%d, denied:%d,", uid, path, access_type, action_denied);
-	for (i=0; i < MD5_DIGEST_LENGTH; i++){
-			sprintf(output+strlen(output), "%02x",  hash[i]);
-	}
-	sprintf(output + strlen(output), ", %s", asctime(timeinfo));  // add the strlen of output, to ont overwrite the previous data
-	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);  // actually write the data to log file
-
-
 	/* call the original fopen function */
 	original_fopen_ret = (*original_fopen)(path, mode);
 	if(errno == EACCES  && original_fopen_ret == NULL){  // the error code returned by fopen, EACCESS= not sufficient priviledges
 		action_denied = 1;
 	}
+
+
+	sprintf(output, "uid:%d, %s, access:%d, denied:%d,", uid, (char*)get_path_from_fp(original_fopen_ret), access_type, action_denied);
+	for (i=0; i < MD5_DIGEST_LENGTH; i++){
+			sprintf(output+strlen(output), "%02x",  hash[i]);
+	}
+	sprintf(output + strlen(output), ", %s", asctime(timeinfo));  // add the strlen of output, to ont overwrite the previous data
+	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);  // actually write the data to log file
 
 	return original_fopen_ret;
 }
@@ -105,25 +135,7 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 
 
-	/* Get the file descriptor-> and then the path */
-	int fno;
-	int MAXSIZE = 0xFFF;
-	char proclnk[0xFFF];  // the link is stored here
-	char path[0xFFF];
-	ssize_t r;
-
-	fno = fileno(stream);  // the file pointer, from arguments
-	sprintf(proclnk, "/proc/self/fd/%d", fno);  // works on Unix OS's only!Creates the full path of the proc link
-
-	r = readlink(proclnk, path, MAXSIZE);
-    if (  r < 0){
-        printf("failed to readlink()! Exiting..\n");
-        exit(1);
-    }
-    path[r] = '\0';
-
-
-
+	
 	size_t original_fwrite_ret;
 	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
 
@@ -131,6 +143,9 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
 	original_fwrite_ret = (*original_fwrite)(ptr, size, nmemb, stream);
 
+
+
+	char* path = (char *)get_path_from_fp(stream);  // the memory is allocated inside the function
 
 
 	/************* tHe logger follows****************/
@@ -168,7 +183,7 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
 	int uid = getuid();
 
-	sprintf(output, "uid:%d,%s access:%d, denied:%d,", uid, path, access_type, action_denied);
+	sprintf(output, "uid:%d, %s access:%d, denied:%d,", uid, path, access_type, action_denied);
 	for (i=0; i < MD5_DIGEST_LENGTH; i++){
 			sprintf(output+strlen(output), "%02x",  hash[i]);
 	}
