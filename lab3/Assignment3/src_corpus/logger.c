@@ -45,7 +45,7 @@ const char* get_md5_from_path(char* path){
 	long filesize;
 	unsigned char *buf;
 	unsigned char *hash = NULL;
-
+	
 	FILE *original_fopen_ret;
 	FILE *(*original_fopen)(const char*, const char*);
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
@@ -68,7 +68,7 @@ const char* get_md5_from_path(char* path){
 	free(buf);
 	fclose(original_fopen_ret);
 	return (const char*)hash;
-}
+}	
 
 /* Returns the time in a string. The time/date 
  * format is the following: 
