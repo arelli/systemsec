@@ -9,14 +9,14 @@ static const char LOG_PATH[] = "/tmp/file_access.log";
 
 struct entry {
 
-	char uid[100]; /* user id (positive integer) */
-	char access_type[100]; /* access type values [0-2] */
-	char action_denied[100]; /* is action denied values [0-1] */
+	char uid[32]; /* user id, max is 65536 in Linux */
+	char access_type[16]; /* access type values [0-2] */
+	char action_denied[16]; /* is action denied values [0-1] */
 
-	char  date_time[100]; /* file access date and time */
+	char  date_time[32]; /* file access date and time, max length 29 in current format*/
 
-	char file[100]; /* filename (string) */
-	char fingerprint[100]; /* file fingerprint */
+	char file[256]; /* filename/path. Can be a bit long, giving it 150 bytes of space */
+	char fingerprint[64]; /* file fingerprint-32 bytes long */
 };
 
 
@@ -64,6 +64,25 @@ list_file_modifications(FILE *log, char *file_to_scan)
 	return;
 
 }
+/* Takes an integer array and checks if a number is inside it */
+int index_in_array(int number, int * array, size_t length_of_array){
+	for(int i=0;i<length_of_array;i++){
+		if(array[i] == number)
+			return i;  /* return the position of it */
+	}
+	return -1; // didnt found anything
+}
+
+/*
+int index_in_str_array(char* string, int * array, size_t length_of_array){
+	for(int i=0;i<length_of_array;i++){
+		if(array[i] == number)
+			return i;  
+	}
+	return -1; // didnt found anything
+}
+
+*/
 
 
 int 
@@ -85,13 +104,13 @@ main(int argc, char *argv[])
 	/* return the "cursor" at the beginning of the file */
 	fseek(log, 0, SEEK_SET);
 
-
+	/* Load data from the log file in a array of structs */
 	int buffer_length = 255;
 	char buffer[buffer_length];
 	char dummy_buf[200];
 	struct entry * entry_list;
 	size_t entry_size = sizeof(entry_list);
-	entry_list = (struct entry*)malloc(entry_size*lines+50);
+	entry_list = (struct entry*)malloc(entry_size*lines+1);
 	int counter = 0;
 	while(fgets(buffer, buffer_length, log)) {  
     	sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", entry_list[counter].uid, 
@@ -100,27 +119,14 @@ main(int argc, char *argv[])
     	counter ++;
 	}
 
-
-	/* A test code to see id sscanf with regular expressions works! it is indeed.
-	char uid[100], file[100], access_type[100], action_denied[100], fingerprint[100], date_time[100];
-
-	while(fgets(buffer, buffer_length, log)) {  
-    	sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", uid, file , access_type, action_denied,fingerprint,date_time);
-    	printf("Fingerprint of line %d is %s\n", counter+1, fingerprint);
-    	counter ++;
-	}
-	*/
-
-
-
+	/* Just a test print to check if everything has been loaded */
+	/*
 	counter = 0;
 	for (counter=0;counter<lines;counter++){
 		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1, entry_list[counter].uid,
 			entry_list[counter].action_denied,entry_list[counter].access_type,entry_list[counter].fingerprint);
 	}
-
-
-
+	*/
 
 	int ch;
 	if (argc < 2)
@@ -129,10 +135,37 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "hi:m")) != -1) {
 		switch (ch) {		
 		case 'i':
-			list_file_modifications(log, optarg);
+			//list_file_modifications(log, optarg);
+
+
+
+
 			break;
 		case 'm':
-			list_unauthorized_accesses(log);
+			//list_unauthorized_accesses(log);
+			counter = 0;
+			int *uids_in_log = (int*)malloc(sizeof(int)*lines);
+			int *uid_no_of_denials = (int*)malloc(sizeof(int)*lines);  /* hold how many times each user has been denied access */
+			int size_of_array = 0;  /* refers to uids_in_log array */
+			for (counter=0;counter<lines;counter++){
+				if(entry_list[counter].action_denied=="1"){  /* if action was indeed denied */
+					int index_of_uid = index_in_array(atoi(entry_list[counter].uid),uids_in_log,sizeof(int)*size_of_array);
+
+					if (index_of_uid == -1){  /* -1 means no prior elements have this uid */
+						uids_in_log[size_of_array] = atoi(entry_list[counter].uid);  /* save the misbehaving user! */
+						uid_no_of_denials[size_of_array] = 1;
+						size_of_array++;
+					}
+					else{
+						uid_no_of_denials[index_of_uid]++;
+					}
+				}
+			}
+
+			for(int i = 0; i< size_of_array; i++){
+				if(uid_no_of_denials[i]>=7)
+					printf("The user with uid %d has accessed %d times prohibited files.\n",uids_in_log[i], uid_no_of_denials[i]);
+			}
 			break;
 		default:
 			usage();
