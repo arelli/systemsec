@@ -108,10 +108,15 @@ main(int argc, char *argv[])
 	int buffer_length = 255;
 	char buffer[buffer_length];
 	char dummy_buf[200];
+
 	struct entry * entry_list;
 	size_t entry_size = sizeof(entry_list);
 	entry_list = (struct entry*)malloc(entry_size*lines+1);
+
 	int counter = 0;
+
+
+	/* Parse the file! */
 	while(fgets(buffer, buffer_length, log)) {  
     	sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", entry_list[counter].uid, 
     		entry_list[counter].file , entry_list[counter].access_type, entry_list[counter].action_denied,
@@ -119,14 +124,31 @@ main(int argc, char *argv[])
     	counter ++;
 	}
 
+
 	/* Just a test print to check if everything has been loaded */
-	/*
+	
 	counter = 0;
 	for (counter=0;counter<lines;counter++){
 		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1, entry_list[counter].uid,
 			entry_list[counter].action_denied,entry_list[counter].access_type,entry_list[counter].fingerprint);
 	}
-	*/
+	
+
+
+	struct entry * denied;
+	denied = (struct entry*)malloc(entry_size*lines+1);
+	char * denied_flag = "1";
+
+	for(int i=0;i<lines;i++) {  
+		if (strncmp(entry_list[i].action_denied,denied_flag,1)==0)
+			printf("File %s had unauthorized access \n", entry_list[i].file);
+	}
+
+
+
+
+
+
 
 	int ch;
 	if (argc < 2)
