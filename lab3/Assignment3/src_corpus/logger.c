@@ -12,6 +12,10 @@
 #include <errno.h>  // to get access-denied errno from fopen
 #include <unistd.h>  // to check if a file exists in the same dir
 
+/* the path to save the log file to */
+static const char LOG_PATH[] = "/tmp/file_access.log";  // tmp is accessible by all users, but is deleted at reboot
+
+
 /* returns the full path of the file, from the file pointer.
  * works by getting the file descriptor using fileno(), and 
  * then the path of the proclink. This is Unix specific!! 
@@ -45,7 +49,7 @@ const char* get_md5_from_path(char* path){
 	long filesize;
 	unsigned char *buf;
 	unsigned char *hash = NULL;
-	
+
 	FILE *original_fopen_ret;
 	FILE *(*original_fopen)(const char*, const char*);
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
@@ -95,22 +99,24 @@ fopen(const char *path, const char *mode)
 	/* get the pointer to the original fopen we wrap: */
 	original_fopen = dlsym(RTLD_NEXT, "fopen");
 
-	/* find the original fwrite */
-	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
-	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
-
 	/*  get md5 of file if not empty  */
 	unsigned char *hash = NULL;
-	if( access( path, F_OK ) == 0 )   // if file does exist...	
+	/* access() returns 0 if file exists, and -1 else */
+	if( access( path, F_OK ) == 0 ){ // if file does exist...
 		hash = (unsigned char *) get_md5_from_path((char*)path);
+	}
 	else{
 		access_type = 0;  // access type = file creation
-		hash = (unsigned char*)"0"; // md5 for empty file
+		hash = (unsigned char*)malloc(MD5_DIGEST_LENGTH+1);
+		for (int i=0; i < MD5_DIGEST_LENGTH; i++) 
+			sprintf((char*)hash+strlen((char*)hash), "\0\0");
 	}
+
+	printf("[HEX TEST] 0=%02x", 0);
 
 	/* call the original fopen */
 	FILE * file_ptr;
-	file_ptr = (*original_fopen)("log", "a");
+	file_ptr = (*original_fopen)(LOG_PATH, "a");
 
 	/* create the output log data buffer */
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
@@ -122,11 +128,14 @@ fopen(const char *path, const char *mode)
 		action_denied = 1;  // DOES NOT work well on ntfs mounted systems bc they do not support the same privileges!
 
 	/* create a string with all the info to write */
-	sprintf(output, "uid:%d, %s, access:%d, denied:%d,", uid, (char*)get_path_from_fp(original_fopen_ret), access_type, action_denied);
+	sprintf(output, "%d,%s,%d,%d,", uid, (char*)get_path_from_fp(original_fopen_ret), access_type, action_denied);
 	for (int i=0; i < MD5_DIGEST_LENGTH; i++) sprintf(output+strlen(output), "%02x",  hash[i]);
-	sprintf(output + strlen(output), ", %s", get_time());  // add the strlen of output, to ont overwrite the previous data
+	sprintf(output + strlen(output), ",%s", get_time());  // add the strlen of output, to ont overwrite the previous data
 	
 	/* Write all the gathered info to the log file */
+	/* find the original fwrite */
+	size_t (*original_fwrite)(const void*, size_t, size_t, FILE*);
+	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
 	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);  // actually write the data to log file
 
 	/* Return the actual pointer to the file, the user at higher level requested */
@@ -150,6 +159,13 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 	/* call the original fwrite function */
 	original_fwrite = dlsym(RTLD_NEXT, "fwrite");
 	original_fwrite_ret = (*original_fwrite)(ptr, size, nmemb, stream);
+	
+	/* this little magic line of code! writes everything to the file
+	 * before fclose() is called. This way we can read the file 
+	 * again a few lines later in logger.c, to get its md5 hash
+	 *(of the newli writtend data!!)
+	 */
+	fflush(stream); 
 
 	/* get the path of the file pointed by stream argument */
 	char* path = (char *)get_path_from_fp(stream);  // the memory is allocated inside the function
@@ -160,16 +176,16 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 	/* call the original fopen */
 	FILE * file_ptr;
-	file_ptr = (*original_fopen)("log", "a");
+	file_ptr = (*original_fopen)(LOG_PATH, "a");
 
 	/* to initialise log output buffer */
 	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
 	int uid = getuid();
 
 	/* Fill the output buffer with the data to be logged */
-	sprintf(output, "uid:%d, %s, access:%d, denied:%d,", uid, path, access_type, action_denied);
+	sprintf(output, "%d,%s,%d,%d,", uid, path, access_type, action_denied);
 	for (int i=0; i < MD5_DIGEST_LENGTH; i++) sprintf(output+strlen(output), "%02x",  hash[i]);
-	sprintf(output + strlen(output), ", %s", get_time());  // add the strlen of output, to ont overwrite the previous data
+	sprintf(output + strlen(output), ",%s", get_time());  // add the strlen of output, to ont overwrite the previous data
 
 	/* Write the output buffer */
 	(*original_fwrite)(output,strlen(output),sizeof(char),file_ptr);  // actually write the data to log file

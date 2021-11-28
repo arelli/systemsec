@@ -4,22 +4,19 @@
 #include <string.h>
 #include <unistd.h>
 
+/* the path to save the log file to */
+static const char LOG_PATH[] = "/tmp/file_access.log";
+
 struct entry {
 
 	int uid; /* user id (positive integer) */
 	int access_type; /* access type values [0-2] */
 	int action_denied; /* is action denied values [0-1] */
 
-	time_t date; /* file access date */
-	time_t time; /* file access time */
+	char*  date_time; /* file access date and time */
 
 	char *file; /* filename (string) */
 	char *fingerprint; /* file fingerprint */
-
-	/* add here other fields if necessary */
-	/* ... */
-	/* ... */
-
 };
 
 
@@ -44,7 +41,6 @@ usage(void)
 void 
 list_unauthorized_accesses(FILE *log)
 {
-
 	/* add your code here */
 	/* ... */
 	/* ... */
@@ -59,7 +55,6 @@ list_unauthorized_accesses(FILE *log)
 void
 list_file_modifications(FILE *log, char *file_to_scan)
 {
-
 	/* add your code here */
 	/* ... */
 	/* ... */
