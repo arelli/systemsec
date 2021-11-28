@@ -118,68 +118,65 @@ main(int argc, char *argv[])
 
 
 	/* Just a test print to check if everything has been loaded */
-	
+	/*
 	counter = 0;
 	for (counter=0;counter<lines;counter++){
 		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1, entry_list[counter].uid,
 			entry_list[counter].action_denied,entry_list[counter].access_type,entry_list[counter].fingerprint);
 	}
+	*/
 	
 
+	int ch;
+	if (argc < 2)
+		usage();	
 
+	/* declarations for -m mode */
 	struct entry * denied;
 	denied = (struct entry*)malloc(entry_size*lines+1);
 	char * denied_flag = "1";
 	int denied_index =0;  
 	int *uids_denied = (int*)malloc(sizeof(int)*lines);
+	int *no_of_denials = (int*)malloc(sizeof(int)*lines);
+	int size_of_denials = 0;
 	int index_of_uid;
-	int size_of_array = 0;
-
-	for(int i=0;i<lines;i++) {  
-		if (strncmp(entry_list[i].action_denied,denied_flag,1)==0){
-			denied[denied_index]= entry_list[i];
-			printf("File %s had unauthorized access by uid %s \n", denied[denied_index].file, denied[denied_index].uid);
-
-
-			index_of_uid = index_in_array(atoi(entry_list[i].uid),uids_denied,sizeof(int)*size_of_array);
-			printf("index_of_uid = %d\n", index_of_uid);
-
-			if (index_of_uid == -1){  /* -1 means no prior elements have this uid */
-				uids_denied[size_of_array] = atoi((const char*)entry_list[i].uid);  /* save the misbehaving user! */
-				printf("uid = %s\n", entry_list[i].uid);
-				size_of_array++;
-			}
-		}
-	}
-	printf("\n Uids that tried to access prohibited files:\n");
-	for (int i; i<size_of_array;i++){
-		printf("%d\n", uids_denied[i]);
-
-	}
-
-
-
-
-
-
-
-
-
-	int ch;
-	if (argc < 2)
-		usage();		
+	int size_of_array = 0;	
+	/* end of declarations */
 
 	while ((ch = getopt(argc, argv, "hi:m")) != -1) {
 		switch (ch) {		
 		case 'i':
 			//list_file_modifications(log, optarg);
 
-
-
-
 			break;
 		case 'm':
-			//list_unauthorized_accesses(log);
+			/* get the entries which show denial of permissions, to a new array of structs.
+			 * Also, save the user id's in a seperate array(users_denied)
+			 */
+			for(int i=0;i<lines;i++) {  
+				if (strncmp(entry_list[i].action_denied,denied_flag,1)==0){
+					denied[denied_index]= entry_list[i];
+					printf("File %s had unauthorized access by uid %s \n", denied[denied_index].file, denied[denied_index].uid);
+
+					/* check if the uid is already in the list */
+					index_of_uid = index_in_array(atoi(entry_list[i].uid),uids_denied,sizeof(int)*size_of_array);
+
+					if (index_of_uid == -1){  /* -1 means no prior elements have this uid */
+						uids_denied[size_of_array] = atoi((const char*)entry_list[i].uid);  /* save the misbehaving user! */
+						size_of_array++;
+						no_of_denials[index_of_uid] = 1;
+					}
+					else{
+						no_of_denials[index_of_uid] ++;
+						size_of_denials++;
+					}
+				}
+			}
+			printf("\n Uids that tried to access prohibited files:\n");
+			for (int i; i<size_of_array;i++){
+				printf("%d, %d times\n", uids_denied[i], no_of_denials[i]);
+
+			}
 
 			break;
 		default:
