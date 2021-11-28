@@ -47,7 +47,7 @@ int main()
 
 	for (i = 0; i < 10; i++) {
 
-		file = fopen(filenames[i], "w+");
+		file = fopen(filenames[i], "w");
 		if (file == NULL) 
 			printf("fopen error\n");
 		else {

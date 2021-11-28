@@ -109,10 +109,8 @@ fopen(const char *path, const char *mode)
 		access_type = 0;  // access type = file creation
 		hash = (unsigned char*)malloc(MD5_DIGEST_LENGTH+1);
 		for (int i=0; i < MD5_DIGEST_LENGTH; i++) 
-			sprintf((char*)hash+strlen((char*)hash), "\0\0");
+			sprintf((char*)hash+strlen((char*)hash), "\0\0");  /* fill the md5 result with zeroes */
 	}
-
-	printf("[HEX TEST] 0=%02x", 0);
 
 	/* call the original fopen */
 	FILE * file_ptr;
@@ -179,7 +177,7 @@ fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 	file_ptr = (*original_fopen)(LOG_PATH, "a");
 
 	/* to initialise log output buffer */
-	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need
+	char * output = (char * )malloc(sizeof(char)*256);  // a lot bigger than what we need(we need about 150 bites)
 	int uid = getuid();
 
 	/* Fill the output buffer with the data to be logged */
