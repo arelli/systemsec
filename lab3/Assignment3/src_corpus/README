@@ -51,6 +51,22 @@ IMPLEMENTATION
 		file pointer, and not the whole filepath/filename. Get_path_from_fp() uses fileno() to get the file descriptor
 		from the stream, and then we create the link (at /proc/self/fd/[file descriptor]) and feed it to readlink() to
 		get the full file path. This only works on Linux-based systems so be careful! 
-		In total, the logging works flawlessly, testing for all the required variables.
+		In total, the logging works flawlessly, testing and logging for all the required variables.
+
 	-acmonitor.c
-		This is the code that parses the log file, and provides a user interface to check on some info.
+		This is the code that parses the log file, and provides a user interface to check on some info. It requires us to 
+		check how many users have tried to access at least 7 different files with no adequate permissions, and to list
+		who made changes to a certain files. To implement the above, we have to parse the log file and store it in memory,
+		preferably in structs. The parsing is done with sscanf() and regular expressions to avoid the complexity of strtok(),
+		and make the code easier to read. This part of the code works also flawlessly, reading the log file and classifying 
+		eveything to its corresponding struct field. The -m and -i modes, are not working, and are left with less than ideal
+		implementations, due to lack of time from my side. Despite this, they output some useful data, for example -m lists	
+		how many times a user has tried to change a file (in general) without having the right permissions, and the user's 
+		UID at the screen. It compiles with no errors, but inside there are memory leaks I haven't had the time to patch.
+
+	-test_aclog.c
+		The testing file, helps us and the class instructors to test the code and its capabilities. In the aforementioned 
+		file, 10 new files are created, and then overwritten with different modes("w","w+" etc), sometimes with the same
+		data they already contained, sometimes with new. This was to test the change-in-files detection of acmonitor.c but
+		as we said earlier, it is not fully implemented.
+	
