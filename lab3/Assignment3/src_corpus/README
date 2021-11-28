@@ -1,0 +1,56 @@
+SYSTEM SEC LAB(3)                                                            Final Report
+ 
+PERSONAL INFO
+	This is the 3rd excersise/project in the class of Systems Security, in Technical University of Crete, 2021.
+	Student: Antonios Rafail Ellinitakis, 2017030118
+
+SYNOPSIS
+	The assignment pdf asked us to create a wrapper function for fopen() and fwrite() functions in C, that will
+	intercept certain things about the callee and store them in a log file. These things are:
+	
+	- name/path of the file
+		In my case, the whole path was used for portability
+
+	- uid(user ID)
+		The uid of the calling task
+
+	- MD5 checksum
+		 The checksum of the file before and after the operation
+
+	- Date/time 
+		The exact timestamp the operation occured. 
+
+	- Access type
+		To know ehwn it was simple file creation, when it was existing file opening, or writing into an existing file.
+
+	- If the operation was denied
+		A simple boolean flag that shows if the write/open operation was allowed by the OS. 
+	
+	With all these in hand, we can check for data breaches in our system, supposing that the interceptor functions are 
+	enforced by default.
+
+IMPLEMENTATION
+	The implementation is divided in three parts. Each one serves a purpose, and they must all be completed in order
+	for the whole demonstration to work smoothly.
+		
+	- logger.c
+		This file is the backbone of the demo. It contains the wrapper functions for fopen() and fwrite() we created,
+		and creates the produced-by-gcc shared object libray file, logger.so, that is fed to LD_PRELOAD during testing.
+		One of the main issues with implementing this, was the MD5 checksum production, because it needs cooperation 
+		with the openssl library(which is notoriously not so beginner friendly documented) and calls to the original
+		fopen()(not the wrapped one we offer!). A new function get_md5_from_path() was created, that takes the file path,
+		and returns the checksum in a string. Inside this function, a new fopen() call occurs, even if we already have
+		the same file open on another stream. This is because the other stream may be "w"(write-only mode), and this 
+		would not allow us to read the contents and produce the hash. An importand role in this process is played by 
+		fflush(), which writes the contents of the external fwrite() to the file, and then lets us use our standard
+		md5 function, and read the file *after* the changes have been made. Other data acquisition methods were 
+		implemented in a function, such as get_time().Also, the log output was initially placed in the /tmp/ folder, to
+		be accessible by all users, but was moved locally in the project folder to make it easier to send it to the 
+		class instructors. It is commented in the code though. The function get_path_from_fp() was created, to assist
+		in md5 derivation in the case of fwrite(). This is because, in the external fwrite() call we have only the 
+		file pointer, and not the whole filepath/filename. Get_path_from_fp() uses fileno() to get the file descriptor
+		from the stream, and then we create the link (at /proc/self/fd/[file descriptor]) and feed it to readlink() to
+		get the full file path. This only works on Linux-based systems so be careful! 
+		In total, the logging works flawlessly, testing for all the required variables.
+	-acmonitor.c
+		This is the code that parses the log file, and provides a user interface to check on some info.

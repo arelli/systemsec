@@ -13,7 +13,7 @@
 #include <unistd.h>  // to check if a file exists in the same dir
 
 /* the path to save the log file to */
-static const char LOG_PATH[] = "/tmp/file_access.log";  // tmp is accessible by all users, but is deleted at reboot
+static const char LOG_PATH[] = "file_logging.log";  // This is to be accessible by all : "/tmp/file_access.log";  // tmp is accessible by all users, but is deleted at reboot
 
 
 /* returns the full path of the file, from the file pointer.

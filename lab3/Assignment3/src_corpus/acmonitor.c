@@ -5,18 +5,18 @@
 #include <unistd.h>
 
 /* the path to save the log file to */
-static const char LOG_PATH[] = "/tmp/file_access.log";
+static const char LOG_PATH[] = "file_logging.log";  // This is to be accessible by all :"/tmp/file_access.log";
 
 struct entry {
 
-	char uid[32]; /* user id, max is 65536 in Linux */
-	char access_type[16]; /* access type values [0-2] */
-	char action_denied[16]; /* is action denied values [0-1] */
+	char uid[256]; /* user id, max is 65536 in Linux */
+	char access_type[256]; /* access type values [0-2] */
+	char action_denied[256]; /* is action denied values [0-1] */
 
-	char  date_time[32]; /* file access date and time, max length 29 in current format*/
+	char  date_time[256]; /* file access date and time, max length 29 in current format*/
 
 	char file[256]; /* filename/path. Can be a bit long, giving it 150 bytes of space */
-	char fingerprint[64]; /* file fingerprint-32 bytes long */
+	char fingerprint[256]; /* file fingerprint-32 bytes long */
 };
 
 
@@ -103,8 +103,7 @@ main(int argc, char *argv[])
 
 	struct entry * entry_list;
 	size_t entry_size = sizeof(entry_list);
-	entry_list = (struct entry*)malloc(entry_size*lines+1);
-
+	entry_list = (struct entry*)malloc(entry_size*lines*10+1);  // TODO: remove *10!!!
 	int counter = 0;
 
 
@@ -131,11 +130,18 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();	
 
+	/* declarations for -i mode */
+	struct entry * entries_for_file;
+	entries_for_file = (struct entry*)malloc(entry_size*lines+1);
+	int file_index = 0;
+	char * last_sum = malloc(64);
+
 	/* declarations for -m mode */
 	struct entry * denied;
 	denied = (struct entry*)malloc(entry_size*lines+1);
 	char * denied_flag = "1";
 	int denied_index =0;  
+
 	int *uids_denied = (int*)malloc(sizeof(int)*lines);
 	int *no_of_denials = (int*)malloc(sizeof(int)*lines);
 	int size_of_denials = 0;
@@ -151,56 +157,75 @@ main(int argc, char *argv[])
 
 	int string_found = 0;
 	int filenames_length = 0;
+	int file_counter = 0;  /* count how many times we've seen this file */
 
 	/* end of declarations */
+
+
 
 	while ((ch = getopt(argc, argv, "hi:m")) != -1) {
 		switch (ch) {		
 		case 'i':
-			//list_file_modifications(log, optarg);
+			for(int i=0;i<lines;i++) {  
+				if (strncmp(entry_list[i].file,optarg,1)!=0){  /* check if it is the file we are looking for */
+					if (file_counter==0){
+						last_sum = entry_list[i].fingerprint; 
+						printf("file counter == 0\n");
+					}
+					/* if the sum has changed... */
+					else if (strncmp(entry_list[i].fingerprint,last_sum,32)!=0){
+						printf("User %s changed file from %s to %s \n",
+							entry_list[i].uid, last_sum, entry_list[i].fingerprint);
+					}
+					denied[file_index]= entry_list[i];
+					last_sum = entry_list[i].fingerprint;
+					file_counter ++;
+				}
+				file_index++;
+			}
 
 			break;
 		case 'm':
 			/* get the entries which show denial of permissions, to a new array of structs.
-			 * Also, save the user id's in a seperate array(users_denied)
 			 */
 			for(int i=0;i<lines;i++) {  
 				if (strncmp(entry_list[i].action_denied,denied_flag,1)==0){
-					denied[denied_index]= entry_list[i];
-					//printf("File %s had unauthorized access by uid %s \n", denied[denied_index].file, denied[denied_index].uid);
+						denied[denied_index]= entry_list[i];
+						//printf("File %s had unauthorized access by uid %s \n", denied[denied_index].file, denied[denied_index].uid);
 
-					/* check if the uid is already in the list */
-					index_of_uid = index_in_array(atoi(entry_list[i].uid),uids_denied,sizeof(int)*size_of_array);
+						/* check if the uid is already in the list */
+						index_of_uid = index_in_array(atoi(entry_list[i].uid),uids_denied,sizeof(int)*size_of_array);
 
-					/* if filename is not previously encountered */
-					/* TODO: make it work for sifferent files not acceses!! 
-					if ((filenames_length ==0) || (string_found = 0)){
-						filenames[filenames_length] = entry_list[i].file;
+						/* if filename is not previously encountered */
+						/* TODO: make it work for sifferent files not acceses!! 
+						if ((filenames_length ==0) || (string_found = 0)){
+							filenames[filenames_length] = entry_list[i].file;
+						}
+						*/
+					
+						if (index_of_uid == -1){  /* -1 means no prior elements have this uid */
+							uids_denied[size_of_array] = atoi((const char*)entry_list[i].uid);  /* save the misbehaving user! */
+							size_of_array++;
+							no_of_denials[index_of_uid] = 1;
+						}
+						else{
+							no_of_denials[index_of_uid] ++;
+							size_of_denials++;
+						}
 					}
-					*/
-				
-					if (index_of_uid == -1){  /* -1 means no prior elements have this uid */
-						uids_denied[size_of_array] = atoi((const char*)entry_list[i].uid);  /* save the misbehaving user! */
-						size_of_array++;
-						no_of_denials[index_of_uid] = 1;
-					}
-					else{
-						no_of_denials[index_of_uid] ++;
-						size_of_denials++;
-					}
+
+					denied_index++;
 				}
+				printf("Uids that tried to access prohibited files:\n");
+				for (int i; i<size_of_array;i++){
+					//if (no_of_denials[i]>=7)
+					printf("uid %d, %d times\n", uids_denied[i], no_of_denials[i]);
+				}
+				printf("/*Note: I haven't been able to make it work "
+					   " taking into consideration the filenames yet.\n"
+					   "This is due to academic load from the school's "
+					   "other classes. */\n" );
 
-				denied_index++;
-			}
-			printf("Uids that tried to access prohibited files:\n");
-			for (int i; i<size_of_array;i++){
-				//if (no_of_denials[i]>=7)
-				printf("uid %d, %d times\n", uids_denied[i], no_of_denials[i]);
-			}
-			printf("/*Note: I haven't been able to make it work "
-				   " taking into consideration the filenames yet.\n"
-				   "This is due to academic load from the school's "
-				   "other classes. */\n" );
 
 			break;
 		default:

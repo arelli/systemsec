@@ -11,7 +11,7 @@ test_aclog: test_aclog.c
 
 run: logger.so test_aclog
 	LD_PRELOAD=./logger.so ./test_aclog
-	cat /tmp/file_access.log
+	cat file_logging.log
 clean:
 	rm -rf logger.so
 	rm -rf test_aclog
@@ -19,5 +19,5 @@ clean:
 clean-files:
 	rm -f file_0 file_1 file_2 file_3 file_4
 	rm -f file_5 file_6 file_7 file_8 file_9
-	rm -f /tmp/file_access.log
+	rm -f file_logging.log
 
