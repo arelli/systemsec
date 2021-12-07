@@ -13,16 +13,17 @@
 void main(){
 	int limit = 50;
 	size_t *primes;
+	/* disable stdout buffering! dangerous with many printf's! */
 	setvbuf(stdout,NULL,_IONBF,0);  /* this is neededwith fish terminal in arch! */
-	printf("Inside the sieve function!!!!");
 	
 	/* used to store all numbers, including primes */
 	size_t *all_numbers = (size_t*)malloc(sizeof(size_t)*limit);
 	for(int i=0;i<=limit;i++){
 		all_numbers[i]=i;
 	}
-
+	
 	int index = 2;
+	int how_many_primes = limit;
 
 	/* the step of the sieve */
 	size_t current_step = 2;
@@ -70,20 +71,21 @@ void main(){
 		
 		/* set this element as non-prime, with the zero notation */
 		index += current_step; 
-		all_numbers[index] = 0;
-		printf("index = %d, curr_step = %d\n", index, current_step);
+		if (all_numbers[index] != 0){
+			all_numbers[index]=0;
+			how_many_primes--;
+		}
 	}
 
 	/* by convention, we remove 1 from the primes */
 	all_numbers[1] = 0;
 
-	int how_many_primes = 0;
 	for(int i; i<limit;i++){
-		if (all_numbers[i]!=0){
-			how_many_primes++;
+		if (all_numbers[i]!=0){	
 			printf("%d, \n", all_numbers[i]);
 		}
 	}
+	printf("There are in total %d prime numbers from 1 to %d .\n", how_many_primes,limit);
 }
 
 
