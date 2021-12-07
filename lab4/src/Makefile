@@ -3,7 +3,7 @@ DBUG = -g
 CCFLAGS = -O2 -Wall -pedantic
 OBJFILES = main.o rsa.o utils.o
 
-TARGET = assign_3
+TARGET = assign_4
 
 
 all: $(TARGET)
