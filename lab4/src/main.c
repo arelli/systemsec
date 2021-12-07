@@ -29,7 +29,8 @@ main(int argc, char **argv)
 	key_file = NULL;
 	op_mode = -1;
 
-
+	sieve_of_eratosthenes(20,&opt);
+	
 	/*
 	 * Get arguments
 	 */
@@ -58,7 +59,8 @@ main(int argc, char **argv)
 			break;
 		case 'h':
 		default:
-			usage();
+			sieve_of_eratosthenes(50,NULL);
+			//usage();
 		}
 	}
 
@@ -88,8 +90,7 @@ main(int argc, char **argv)
 	free(input_file);
 	free(output_file);
 	free(key_file);
-
-
+	
 	/* END */
 	return 0;
 }
