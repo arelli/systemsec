@@ -30,6 +30,7 @@ main(int argc, char **argv)
 	op_mode = -1;
 
 	sieve_of_eratosthenes(20,&opt);
+	gcd(90,66);
 	
 	/*
 	 * Get arguments

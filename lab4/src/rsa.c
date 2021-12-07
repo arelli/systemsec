@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "rsa.h"
-#include "utils.h"
+#include <stdlib.h>
 
 /*
  * Sieve of Eratosthenes Algorithm
@@ -11,21 +10,20 @@
  *
  * ret:  The prime numbers that are less or equal to the limit
  */
-size_t *
-sieve_of_eratosthenes(int limit, int *primes_sz)
-{
+size_t* sieve_of_eratosthenes(int limit,size_t * prime_len){
+	//int limit = 100;
 	size_t *primes;
-	printf("Inside the sieve function!!!!");
-	while(1){
-	}
+	/* disable stdout buffering! dangerous with many printf's! */
+	setvbuf(stdout,NULL,_IONBF,0);  /* this is neededwith fish terminal in arch! */
 	
 	/* used to store all numbers, including primes */
 	size_t *all_numbers = (size_t*)malloc(sizeof(size_t)*limit);
 	for(int i=0;i<=limit;i++){
 		all_numbers[i]=i;
 	}
-
-	int index = 0;
+	
+	int index = 2;
+	int how_many_primes = limit;
 
 	/* the step of the sieve */
 	size_t current_step = 2;
@@ -42,7 +40,7 @@ sieve_of_eratosthenes(int limit, int *primes_sz)
 		
 		/* start from the beginning, increasing the sieving step */
 		if (index>=limit){
-			index = 0;
+			//index = 2;
 			temp_index = 0;
 			
 			/* find the index of the current step in all_numbers[] */
@@ -59,30 +57,35 @@ sieve_of_eratosthenes(int limit, int *primes_sz)
 			not_found = 1;
 			while(not_found){
 				temp_index ++;
+				if(temp_index>=limit)
+					break;
 				if(all_numbers[temp_index]!=0){
 					last_step = current_step;
 					current_step = all_numbers[temp_index];
 					not_found = 0;
 				}
 			}
+			/* each time it must start from the current step index! */
+			index = current_step;
 		}
 		
 		/* set this element as non-prime, with the zero notation */
 		index += current_step; 
-		all_numbers[index] = 0;
-	}
-
-	int how_many_primes = 0;
-	for(int i; i<limit;i++){
-		if (all_numbers[i]!=0){
-			how_many_primes++;
-			printf("%d, \n");
+		if (all_numbers[index] != 0){
+			all_numbers[index]=0;
+			how_many_primes--;
 		}
 	}
 
+	/* by convention, we remove 1 from the primes */
+	all_numbers[1] = 0;
 
-
-	return primes;
+	for(int i; i<limit;i++){
+		if (all_numbers[i]!=0){	
+			printf("%d, \n", all_numbers[i]);
+		}
+	}
+	printf("There are in total %d prime numbers from 1 to %d .\n", how_many_primes,limit);
 }
 
 
@@ -97,8 +100,19 @@ sieve_of_eratosthenes(int limit, int *primes_sz)
 int
 gcd(int a, int b)
 {
-
-	/* TODO */
+	int greatest_number;
+	int gcd = 0;
+	if(a>b) 
+		greatest_number = a;
+	else
+		greatest_number = b;
+	for (int i=2;i<greatest_number; i++){
+		if(a % i == 0  && b % i == 0){
+			gcd = i;
+		}
+	}
+	printf("The gcd of %d and %d is %d\n", a,b,gcd);
+	return gcd;
 
 }
 
