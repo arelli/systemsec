@@ -88,4 +88,9 @@ rsa_encrypt(char *, char *, char *);
 void
 rsa_decrypt(char *, char *, char *);
 
+
+int rand_int(int limit);
+int phi(int n);
+
+
 #endif /* _RSA_H */

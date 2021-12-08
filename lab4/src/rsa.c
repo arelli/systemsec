@@ -19,7 +19,8 @@ size_t* sieve_of_eratosthenes(int limit,int * primes_len){
 	setvbuf(stdout,NULL,_IONBF,0);  /* this is neededwith fish terminal in arch! */
 	
 	/* used to store all numbers, including primes */
-	size_t *all_numbers = (size_t*)malloc(sizeof(size_t)*limit);
+	size_t *all_numbers = (size_t*)malloc(sizeof(size_t)*limit+1);
+	//size_t all_numbers[10000];  /* this fixes memory problems!!
 	for(int i=0;i<=limit;i++){
 		all_numbers[i]=i;
 	}
@@ -115,12 +116,12 @@ gcd(int a, int b)
 		greatest_number = a;
 	else
 		greatest_number = b;
-	for (int i=2;i<greatest_number; i++){
+	for (int i=1;i<greatest_number; i++){
 		if(a % i == 0  && b % i == 0){
 			gcd = i;
 		}
 	}
-	printf("The gcd of %d and %d is %d\n", a,b,gcd);
+	//printf("The gcd of %d and %d is %d\n", a,b,gcd);
 	return gcd;
 
 }
@@ -168,9 +169,10 @@ mod_inverse(size_t a, size_t b)
  */
 void
 rsa_keygen(void)
-{
-	size_t p;
-	size_t q;
+{	int how_many_primes;
+	size_t* primes = sieve_of_eratosthenes(RSA_SIEVE_LIMIT, &how_many_primes);
+	size_t p = primes[rand_int(how_many_primes)-1];
+	size_t q = primes[rand_int(how_many_primes)-1];
 	size_t n;
 	size_t fi_n;
 	size_t e;
@@ -212,21 +214,51 @@ rsa_decrypt(char *input_file, char *output_file, char *key_file)
 
 }
 
-/* returns a random integer between 0 and limit */
-int rand_int(int limit){
-	srand(time(0));
-	return rand()%limit;
+
+char* random_string(int length){
+	char* random_string = (char*)malloc(length*sizeof(char));
+	int i;
+	if (random_string==NULL){
+		printf("Error when allocating memory for random string...Exiting..\n");
+		return NULL;
+	}
+
+	FILE *fpointer;
+	fpointer = fopen("/dev/urandom", "r");  // read file in binary mode
+	fread(random_string,sizeof(char),length,fpointer);  // read somr bytes from fpointer position to random_string
+
+	return random_string;
 }
 
+/* wrapper for the random_string function, to generate 
+ * crypto-safe random selection of prime numbers
+ */
+int rand_int(int limit){
+	return abs((int)(*random_string(1)))%limit;
+}
+
+/* Eulers Totient Function 
+ * counts the positive integers up to n that are relatively prime to n */
+int phi(int n){
+	int counter = 0;
+	for(int i=0; i<n; i++){
+		if (gcd(i,n)==1)
+			counter++;
+	}
+	return counter;
+}
 
 void main(){
-	int primes_length;
+	int primes_length = 10;
 	size_t* prime_numbers = sieve_of_eratosthenes(RSA_SIEVE_LIMIT,&primes_length);
 	for(int i = 0; i<primes_length-1; i++){
 		printf("%d, ", prime_numbers[i]);
 	}
 	printf("\n");
+	
 	int random = rand_int(primes_length);
 	printf("a random number: %d\n", random);
 	printf("and its respective prime: %d\n\n", prime_numbers[random]);
+	printf(" And phi(56) = %d\n", phi(5013));
+	printf("and another random: %d \n", rand_int(primes_length));
 }
