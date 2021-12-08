@@ -11,9 +11,9 @@
  *
  * ret:  The prime numbers that are less or equal to the limit
  */
-size_t* sieve_of_eratosthenes(int limit,int * prime_len){
-	
-	size_t primes[RSA_SIEVE_LIMIT];
+size_t* sieve_of_eratosthenes(int limit,int * primes_len){
+
+	static size_t primes[RSA_SIEVE_LIMIT];
 	/* disable stdout buffering! dangerous with many printf's! */
 	setvbuf(stdout,NULL,_IONBF,0);  /* this is neededwith fish terminal in arch! */
 	
@@ -82,10 +82,10 @@ size_t* sieve_of_eratosthenes(int limit,int * prime_len){
 	all_numbers[1] = 0;
 	int prime_index = 0;
 	//primes = (size_t*)malloc(sizeof(size_t)*how_many_primes);
-	
+	*primes_len = how_many_primes;
 	for(int i; i<limit;i++){
 		if (all_numbers[i]!=0){	
-			printf("%d, \n", all_numbers[i]);
+			//printf("%d, \n", all_numbers[i]);
 			primes[prime_index] = all_numbers[i];
 			prime_index++;
 		}
@@ -213,6 +213,10 @@ rsa_decrypt(char *input_file, char *output_file, char *key_file)
 
 
 void main(){
-	size_t* primes = sieve_of_eratosthenes(50,NULL);
-	int i = 10;
+	int primes_length;
+	size_t* prime_numbers = sieve_of_eratosthenes(RSA_SIEVE_LIMIT,&primes_length);
+	for(int i = 0; i<primes_length-1; i++){
+		printf("%d, ", prime_numbers[i]);
+	}
+	printf("\n");
 }
