@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "rsa.h"
 
 /*
@@ -13,7 +14,7 @@
  */
 size_t* sieve_of_eratosthenes(int limit,int * primes_len){
 
-	static size_t primes[RSA_SIEVE_LIMIT];
+	static size_t primes[RSA_SIEVE_LIMIT];  /* dynamic allocation causes problems here! */
 	/* disable stdout buffering! dangerous with many printf's! */
 	setvbuf(stdout,NULL,_IONBF,0);  /* this is neededwith fish terminal in arch! */
 	
@@ -211,6 +212,12 @@ rsa_decrypt(char *input_file, char *output_file, char *key_file)
 
 }
 
+/* returns a random integer between 0 and limit */
+int rand_int(int limit){
+	srand(time(0));
+	return rand()%limit;
+}
+
 
 void main(){
 	int primes_length;
@@ -219,4 +226,7 @@ void main(){
 		printf("%d, ", prime_numbers[i]);
 	}
 	printf("\n");
+	int random = rand_int(primes_length);
+	printf("a random number: %d\n", random);
+	printf("and its respective prime: %d\n\n", prime_numbers[random]);
 }
