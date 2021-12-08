@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "rsa.h"
 
 /*
  * Sieve of Eratosthenes Algorithm
@@ -10,9 +11,9 @@
  *
  * ret:  The prime numbers that are less or equal to the limit
  */
-size_t* sieve_of_eratosthenes(int limit,size_t * prime_len){
-	//int limit = 100;
-	size_t *primes;
+size_t* sieve_of_eratosthenes(int limit,int * prime_len){
+	
+	size_t primes[RSA_SIEVE_LIMIT];
 	/* disable stdout buffering! dangerous with many printf's! */
 	setvbuf(stdout,NULL,_IONBF,0);  /* this is neededwith fish terminal in arch! */
 	
@@ -79,13 +80,20 @@ size_t* sieve_of_eratosthenes(int limit,size_t * prime_len){
 
 	/* by convention, we remove 1 from the primes */
 	all_numbers[1] = 0;
-
+	int prime_index = 0;
+	//primes = (size_t*)malloc(sizeof(size_t)*how_many_primes);
+	
 	for(int i; i<limit;i++){
 		if (all_numbers[i]!=0){	
 			printf("%d, \n", all_numbers[i]);
+			primes[prime_index] = all_numbers[i];
+			prime_index++;
 		}
 	}
+
+	
 	printf("There are in total %d prime numbers from 1 to %d .\n", how_many_primes,limit);
+	return primes;
 }
 
 
@@ -201,4 +209,10 @@ rsa_decrypt(char *input_file, char *output_file, char *key_file)
 
 	/* TODO */
 
+}
+
+
+void main(){
+	size_t* primes = sieve_of_eratosthenes(50,NULL);
+	int i = 10;
 }

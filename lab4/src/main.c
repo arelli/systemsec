@@ -29,9 +29,15 @@ main(int argc, char **argv)
 	key_file = NULL;
 	op_mode = -1;
 
+	//size_t* primes =(size_t*)malloc(sizeof(size_t)*30);
 	sieve_of_eratosthenes(20,&opt);
 	gcd(90,66);
-	
+	/*for (int i=0;i<10;i++){
+		printf("[main]primes[%d]=%d\n",i,primes[i]);
+	}
+	*/
+
+
 	/*
 	 * Get arguments
 	 */
