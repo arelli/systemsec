@@ -200,8 +200,17 @@ rsa_keygen(void)
 void
 rsa_encrypt(char *input_file, char *output_file, char *key_file)
 {
-
-	/* TODO */
+	FILE *fp;
+	int n,d;
+	fp = fopen("public_keys", "r");
+	if (fp == NULL){
+		printf("Can't open file for reading.\n");
+	}
+	fscanf(fp, "%d", &n);
+	fscanf(fp, "%d", &d);
+	fclose(fp);
+	/* debug prints */
+	printf("[rsa_enc] n = %d, d=%d\n",n,d);
 
 }
 
@@ -265,4 +274,5 @@ void main(){
 	printf("The modular inverse of 3 and 11 is %d(should be 4) \n", mod_inverse(3,11));
 	printf("The modular inverse of 7 and 26 is %d(should be 15)\n", mod_inverse(7,26));
 	rsa_keygen();
+	rsa_encrypt(NULL,NULL,NULL);
 }
