@@ -93,8 +93,6 @@ size_t* sieve_of_eratosthenes(int limit,int * primes_len){
 		}
 	}
 
-	
-	printf("There are in total %d prime numbers from 1 to %d .\n", how_many_primes,limit);
 	return primes;
 }
 
@@ -128,26 +126,9 @@ gcd(int a, int b)
 
 
 /*
- * Chooses 'e' where 
- *     1 < e < fi(n) AND gcd(e, fi(n)) == 1
- *
- * arg0: fi(n)
- *
- * ret: 'e'
- */
-size_t
-choose_e(size_t fi_n)
-{
-	size_t e;
-
-	/* TODO */
-
-	return e;
-}
-
-
-/*
- * Calculates the modular inverse
+ * Calculates the modular inverse, which is the number m for whom
+ * it is true that:
+ *		a*m=1 mod b, where mE{0,1,...,b-2,b-1}
  *
  * arg0: first number
  * arg1: second number
@@ -155,11 +136,11 @@ choose_e(size_t fi_n)
  * ret: modular inverse
  */
 size_t
-mod_inverse(size_t a, size_t b)
+mod_inverse(size_t a, size_t b)  /* in our appliaction, a=e and b=fi(n)) */
 {
-
-	/* TODO */
-
+	for (int x = 1; x < b; x++)
+        if (((a%b) * (x%b)) % b == 1)
+            return x;
 }
 
 
@@ -171,14 +152,29 @@ void
 rsa_keygen(void)
 {	int how_many_primes;
 	size_t* primes = sieve_of_eratosthenes(RSA_SIEVE_LIMIT, &how_many_primes);
-	size_t p = primes[rand_int(how_many_primes)-1];
-	size_t q = primes[rand_int(how_many_primes)-1];
-	size_t n;
-	size_t fi_n;
-	size_t e;
-	size_t d;
+	/* select 2 random prime numbers from the list returned by the sieve .
+	 * they must have a product of at least 127, because the end result will
+	 * be modded by n (which is p*q).
+	 */
+	size_t p = primes[rand_int(how_many_primes)];
+	size_t q = 0;
+	while(p*q<=127){
+		q = primes[rand_int(how_many_primes)];
+	}
+	size_t n = p * q;
+	size_t fi_n = (p-1)*(q-1); //phi(n);
+	size_t e = primes[rand_int(how_many_primes)];
+	int found = 0;
+	/* select a valid e completely randomly */
+	while(1){
+		if((e%fi_n!=0) && (gcd(e,fi_n)==1))
+			break;
+		else{
+			e = primes[rand_int(how_many_primes)];  /* e must be random! */
+		}
+	}  // this loop is infinite if e can't be found!! TODO: check only neccessary primes
 
-	/* TODO */
+	size_t d = mod_inverse(e,(p-1)*(q-1));
 
 }
 
@@ -257,8 +253,10 @@ void main(){
 	printf("\n");
 	
 	int random = rand_int(primes_length);
-	printf("a random number: %d\n", random);
-	printf("and its respective prime: %d\n\n", prime_numbers[random]);
-	printf(" And phi(56) = %d\n", phi(5013));
+	printf("a random number: %d ,", random);
+	printf("and its respective prime: %d\n", prime_numbers[random]);
+	printf("And phi(5013) = %d(should be 3336)\n", phi(5013));
 	printf("and another random: %d \n", rand_int(primes_length));
+	printf("The modular inverse of 3 and 11 is %d(should be 4) \n", mod_inverse(3,11));
+	printf("The modular inverse of 7 and 26 is %d(should be 15)\n", mod_inverse(7,26));
 }
