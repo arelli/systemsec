@@ -146,7 +146,11 @@ mod_inverse(size_t a, size_t b)  /* in our appliaction, a=e and b=fi(n)) */
 
 /*
  * Generates an RSA key pair and saves
- * each key in a different file
+ * each key in a different file. The numbers
+ *   -> public key = [n,d]
+ *   -> private key = [n,e]
+ * Both sides need n. The file with the public 
+ * key is safe to be stored publicly!
  */
 void
 rsa_keygen(void)
@@ -176,6 +180,13 @@ rsa_keygen(void)
 
 	size_t d = mod_inverse(e,(p-1)*(q-1));
 
+	FILE * fp;
+	fp = fopen("public_keys","w");  /* creates or overwrites the file */
+	fprintf(fp, "%zu\n%zu\n", n,d);
+	fclose(fp);
+	fp = fopen("private_keys","w");
+	fprintf(fp,"%zu\n%zu\n",n,e);
+	fclose(fp);
 }
 
 
@@ -210,18 +221,12 @@ rsa_decrypt(char *input_file, char *output_file, char *key_file)
 
 }
 
-
+/* got this function from my implementation for lab1 */
 char* random_string(int length){
 	char* random_string = (char*)malloc(length*sizeof(char));
-	int i;
-	if (random_string==NULL){
-		printf("Error when allocating memory for random string...Exiting..\n");
-		return NULL;
-	}
-
 	FILE *fpointer;
-	fpointer = fopen("/dev/urandom", "r");  // read file in binary mode
-	fread(random_string,sizeof(char),length,fpointer);  // read somr bytes from fpointer position to random_string
+	fpointer = fopen("/dev/urandom", "r");  
+	fread(random_string,sizeof(char),length,fpointer);  
 
 	return random_string;
 }
@@ -259,4 +264,5 @@ void main(){
 	printf("and another random: %d \n", rand_int(primes_length));
 	printf("The modular inverse of 3 and 11 is %d(should be 4) \n", mod_inverse(3,11));
 	printf("The modular inverse of 7 and 26 is %d(should be 15)\n", mod_inverse(7,26));
+	rsa_keygen();
 }
