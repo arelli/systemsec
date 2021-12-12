@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-# define RSA_SIEVE_LIMIT 255  /* must be at least 68 to encrypt ascii characters! */
+# define RSA_SIEVE_LIMIT 256  /* must be at least 68 to encrypt ascii characters! */
 
 /*
  * Sieve of Eratosthenes Algorithm

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <math.h>  /* for sqrt root usage */
 #include "rsa.h"
 
 /*
@@ -187,8 +187,16 @@ rsa_keygen(void)
 	fp = fopen("private_keys","w");
 	fprintf(fp,"%zu\n%zu\n",n,e);
 	fclose(fp);
+	printf("[rsa_keygen]n=%d\n",n);
 }
-
+/* *large* integer exponentation */
+unsigned long long power(unsigned long int base, unsigned long exp){
+	unsigned long long result = base;
+        for(int i = 1;i<exp;i++){
+		result *= result;
+        }
+        return result;
+}
 
 /*
  * Encrypts an input file and dumps the ciphertext into an output file
@@ -196,22 +204,43 @@ rsa_keygen(void)
  * arg0: path to input file
  * arg1: path to output file
  * arg2: path to key file
+ *
+ * To encrypt a message M, we do:
+ * 		(M^(d))%n
+ * And the resylt from 1 byte is exactly four.
  */
 void
 rsa_encrypt(char *input_file, char *output_file, char *key_file)
 {
-	FILE *fp;
-	int n,d;
-	fp = fopen("public_keys", "r");
-	if (fp == NULL){
-		printf("Can't open file for reading.\n");
-	}
-	fscanf(fp, "%d", &n);
-	fscanf(fp, "%d", &d);
-	fclose(fp);
-	/* debug prints */
-	printf("[rsa_enc] n = %d, d=%d\n",n,d);
+	unsigned int n,d;
+	FILE * fp_key,*fp_inp, *fp_out;
+	long int filelen;
 
+	fp_key = fopen(key_file,"rb");
+	fscanf(fp_key, "%d", &n);
+	fscanf(fp_key, "%d", &d);
+	printf("[rsa_enc] n = %d and d = %d \n ", n,d);
+	fclose(fp_key);
+	
+	fp_inp = fopen(input_file,"rb");
+	fp_out = fopen(output_file,"w");
+	fseek(fp_inp, 0, SEEK_END);          
+	filelen = ftell(fp_inp);            
+	rewind(fp_inp);                       
+	char byte;  /* 1 byte long */
+	unsigned long int enc_byte;  /* 4 bytes long */
+	
+
+	for(int i = 0; i < filelen; i++) {
+		fread(&byte, 1, 1,fp_inp); 
+
+		enc_byte = power(byte,d)%n;  /* added %127 for ascii  */
+		fwrite(&enc_byte,sizeof(long int),1,fp_out);
+		printf("[enc]filelen=%d byte=%c n=%d d=%d byte^d=%d enc_byte=%d\n",filelen,byte,n,d,power(byte,d),enc_byte);	
+	}
+
+	fclose(fp_inp);
+	fclose(fp_out);
 }
 
 
@@ -274,5 +303,6 @@ void main(){
 	printf("The modular inverse of 3 and 11 is %d(should be 4) \n", mod_inverse(3,11));
 	printf("The modular inverse of 7 and 26 is %d(should be 15)\n", mod_inverse(7,26));
 	rsa_keygen();
-	rsa_encrypt(NULL,NULL,NULL);
+	rsa_encrypt("test","output","public_keys");
+	printf("the  is %llu \n", power(120,311));
 }
