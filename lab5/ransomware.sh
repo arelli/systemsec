@@ -20,13 +20,26 @@ then
 	read input
 	echo -e "enter password: "
 	read pass
-	#openssl aes-256-ecb -in $input -out $input.dec  -d -k $pass
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
+        echo -n "0%|---------------------|100%"
+        printf '\r'
+        COUNT=1
 	for FILE in $(ls $FILEDIR/$input)  
 	do
 		openssl aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.dec -d -k $pass 
 		rm $FILE
-	done
+		PERC=$(( COUNT*100 )) ; PERC=$(( PERC/N_OF_FILES ))
+                echo -n "$PERC%|"
+                for i in $(seq 1 5 $PERC)
+                do
+                        echo -n "O"
+                done
+                printf '\r'
+                COUNT=$(( COUNT+1 ))
+        done
+        echo ""
+        printf '\e[A\e[K'
+
 
 
 elif [[ $choice -eq 1 ]]
@@ -36,13 +49,26 @@ then
 	read input
 	echo -e "Enter password: "
 	read pass
-	#openssl enc -aes-256-ecb -in $input -out $input.enc  -k $pass
-	N_OF_FILES-$(ls $FILEDIR/$input| wc -l)
+	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
+	echo -n "0%|---------------------|100%"
+	printf '\r'
+	COUNT=1
 	for FILE in $(ls $FILEDIR/$input)
         do
                 openssl enc -aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.enc -k $pass 
 		rm $FILE
-        done
+		PERC=$(( COUNT*100 )) ;	PERC=$(( PERC/N_OF_FILES ))
+		echo -n "$PERC%|"
+		for i in $(seq 1 5 $PERC)
+		do
+			echo -n "O"
+		done
+		printf '\r'  
+		COUNT=$(( COUNT+1 ))
+	done
+	echo ""  
+	printf '\e[A\e[K'  
+
 elif [[ $choice -eq 0  ]]
 then
 	echo "How many files to create:"
