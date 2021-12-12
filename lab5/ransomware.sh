@@ -32,7 +32,7 @@ then
                 echo -n "$PERC%|"
                 for i in $(seq 1 5 $PERC)
                 do
-                        echo -n "O"
+                        echo -n "█"
                 done
                 printf '\r'
                 COUNT=$(( COUNT+1 ))
@@ -61,7 +61,7 @@ then
 		echo -n "$PERC%|"
 		for i in $(seq 1 5 $PERC)
 		do
-			echo -n "O"
+			echo -n "█"
 		done
 		printf '\r'  
 		COUNT=$(( COUNT+1 ))
@@ -73,7 +73,7 @@ elif [[ $choice -eq 0  ]]
 then
 	echo "How many files to create:"
 	read number_of_files
-	echo "Basic Filename(that supports wildcards, like ls):"
+	echo "Basic Filename:"
 	read filename
 	COUNT=1
 	echo -n "0%|---------------------|100%"
@@ -91,7 +91,7 @@ then
 		echo -n "$PERC%|"
 		for i in $(seq 1 5 $PERC)  # step is 5 to reduce length of loading bar
 		do
-			echo -n "O"
+			echo -n "█"
 		done
 		printf '\r'  # return the cursor to the beginning of output line
 		COUNT=$(( COUNT+1 ))
