@@ -119,12 +119,13 @@ main(int argc, char *argv[])
 
 
 	/* Just a test print to check if everything has been loaded */
-	
+	/*	
 	counter = 0;
 	for (counter=0;counter<lines;counter++){
 		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1, entry_list[counter].uid,
 			entry_list[counter].action_denied,entry_list[counter].access_type,entry_list[counter].fingerprint);
 	}
+	*/
 	
 	
 
