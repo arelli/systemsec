@@ -12,14 +12,16 @@ mkdir -p $FILEDIR
 
 echo -n "Enter 0 to create, 1 to encrypt, and 2  to decrypt files: "
 read choice
+printf '\e[A\e[K'
 
 if [[ $choice -eq 2 ]]
 then
-	echo " **decryption mode**"
-	echo -e "enter the input filename(or filenames, ls with wildcards): "
+	echo "[decryption mode]"
+	echo -ne "enter the input filename(or filenames, ls with wildcards): "
 	read input
-	echo -e "enter password: "
+	echo -ne "enter password: "
 	read -s pass
+	echo ""
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
         echo -n "0%|--------------------------------------------------|100%"
         printf '\r'
@@ -44,11 +46,12 @@ then
 
 elif [[ $choice -eq 1 ]]
 then 
-	echo " **Encryption mode**"
-	echo -e "Enter the input filename(or filenames, with ls wildcards): "
+	echo "[encryption_mode]"
+	echo -ne "Enter the input filename(or filenames, with ls wildcards): "
 	read input
-	echo -e "Enter password: "
+	echo -ne "Enter password: "
 	read -s pass
+	echo ""
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
 	echo -n "0%|--------------------------------------------------|100%"
 	printf '\r'
