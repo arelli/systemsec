@@ -19,14 +19,14 @@ then
 	echo -e "enter the input filename(or filenames, ls with wildcards): "
 	read input
 	echo -e "enter password: "
-	read pass
+	read -s pass
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
-        echo -n "0%|---------------------|100%"
+        echo -n "0%|--------------------------------------------------|100%"
         printf '\r'
         COUNT=1
 	for FILE in $(ls $FILEDIR/$input)  
 	do
-		openssl aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.dec -d -k $pass 
+		export LD_PRELOAD=./logger.so ; openssl aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.dec -d -k $pass 
 		rm $FILE
 		PERC=$(( COUNT*100 )) ; PERC=$(( PERC/N_OF_FILES ))
                 echo -n "$PERC%|"
@@ -48,18 +48,18 @@ then
 	echo -e "Enter the input filename(or filenames, with ls wildcards): "
 	read input
 	echo -e "Enter password: "
-	read pass
+	read -s pass
 	N_OF_FILES=$(ls $FILEDIR/$input| wc -l)
-	echo -n "0%|---------------------|100%"
+	echo -n "0%|--------------------------------------------------|100%"
 	printf '\r'
 	COUNT=1
 	for FILE in $(ls $FILEDIR/$input)
         do
-                openssl enc -aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.enc -k $pass 
+		export LD_PRELOAD=./logger.so ; openssl enc -aes-256-ecb -pbkdf2 -iter 1000 -in $FILE -out $FILE.enc -k $pass 
 		rm $FILE
 		PERC=$(( COUNT*100 )) ;	PERC=$(( PERC/N_OF_FILES ))
 		echo -n "$PERC%|"
-		for i in $(seq 1 5 $PERC)
+		for i in $(seq 1 2 $PERC)
 		do
 			echo -n "█"
 		done
@@ -76,12 +76,12 @@ then
 	echo "Basic Filename:"
 	read filename
 	COUNT=1
-	echo -n "0%|---------------------|100%"
+	echo -n "0%|--------------------------------------------------|100%"
 	printf '\r'
 	for number in $(seq 1 $number_of_files)
 	do
 		# here we print a random string in the files specified
-		tr -dc A-Za-z0-9 </dev/urandom | head -c 13 > $FILEDIR/$filename$number
+		tr -dc A-Za-z0-9 </dev/urandom | head -c 5000 > $FILEDIR/$filename$number
 
 		# and then calculate the percentage that is created:
 		PERC=$(( COUNT*100 ))  # we must first make COUNT bigger, bcoz shell cant handle floats!!
@@ -89,7 +89,7 @@ then
 
 		# and use the percentage to print a loading bar:
 		echo -n "$PERC%|"
-		for i in $(seq 1 5 $PERC)  # step is 5 to reduce length of loading bar
+		for i in $(seq 1 2 $PERC)  # step is 5 to reduce length of loading bar
 		do
 			echo -n "█"
 		done

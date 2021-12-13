@@ -89,7 +89,7 @@ const char* get_time(){
 
 
 FILE *
-fopen(const char *path, const char *mode) 
+fopen64(const char *path, const char *mode) 
 {
 	FILE *original_fopen_ret;
 	FILE *(*original_fopen)(const char*, const char*);
@@ -97,7 +97,7 @@ fopen(const char *path, const char *mode)
 	int access_type =  1;  // action = file open
 
 	/* get the pointer to the original fopen we wrap: */
-	original_fopen = dlsym(RTLD_NEXT, "fopen");
+	original_fopen = dlsym(RTLD_NEXT, "fopen64");
 
 	/*  get md5 of file if not empty  */
 	unsigned char *hash = NULL;
