@@ -4,7 +4,7 @@ logger: logger.c
 	gcc -Wall -fPIC -shared -o logger.so logger.c -lcrypto -ldl -D_FILE_OFFSET_BITS=64
 
 acmonitor: acmonitor.c 
-	gcc acmonitor.c -o acmonitor
+	gcc -g acmonitor.c -o acmonitor
 
 test_aclog: test_aclog.c 
 	gcc test_aclog.c -o test_aclog -ldl

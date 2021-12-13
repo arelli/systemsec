@@ -9,14 +9,14 @@ static const char LOG_PATH[] = "file_logging.log";  // This is to be accessible 
 
 struct entry {
 
-	char uid[256]; /* user id, max is 65536 in Linux */
-	char access_type[256]; /* access type values [0-2] */
-	char action_denied[256]; /* is action denied values [0-1] */
+	char uid[8]; /* user id, max is 65536 in Linux */
+	char access_type[2]; /* access type values [0-2] */
+	char action_denied[2]; /* is action denied values [0-1] */
 
-	char  date_time[256]; /* file access date and time, max length 29 in current format*/
+	char  date_time[32]; /* file access date and time, max length 29 in current format*/
 
-	char file[256]; /* filename/path. Can be a bit long, giving it 150 bytes of space */
-	char fingerprint[256]; /* file fingerprint-32 bytes long */
+	char file[256]; /* 256 to save space. Should be 4096 bytes long. This could create sigsegvs!*/
+	char fingerprint[64]; /* file md5 digest, 32 bytes long */
 };
 
 
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	}
 
 	/* parse the file */
-	int lines = 0;
+	unsigned long lines = 0;
 	while(!feof(log))  /* while the end of file is not reached */
 	  if(fgetc(log) == '\n')  /* whenever a newline character is found, increment lines */
 	    lines++;
@@ -96,34 +96,36 @@ main(int argc, char *argv[])
 	/* return the "cursor" at the beginning of the file */
 	fseek(log, 0, SEEK_SET);
 
+
+	printf("The lines counted are: %lu\n", lines);
 	/* Load data from the log file in a array of structs */
-	int buffer_length = 255;
+	int buffer_length = 1024;
 	char buffer[buffer_length];
 	char dummy_buf[200];
 
 	struct entry * entry_list;
-	size_t entry_size = sizeof(entry_list);
-	entry_list = (struct entry*)malloc(entry_size*lines*10+1);  // TODO: remove *10!!!
-	int counter = 0;
+	size_t entry_size = sizeof(entry_list);  /* this is NOT all the space the struct need, only its definition. */
+	entry_list = (struct entry*)malloc(entry_size*lines*364+1);  /* 364 is the size that all the fileds in the struct need */
+	unsigned long counter = 0;
 
 
 	/* Parse the file! */
-	while(fgets(buffer, buffer_length, log)) {  
-    	sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", entry_list[counter].uid, 
-    		entry_list[counter].file , entry_list[counter].access_type, entry_list[counter].action_denied,
-    		entry_list[counter].fingerprint, entry_list[counter].date_time);
-    	counter ++;
+	while(fgets(buffer, buffer_length, log)!=NULL) {  
+    		sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", entry_list[counter].uid, 
+    			entry_list[counter].file , entry_list[counter].access_type, entry_list[counter].action_denied,
+    			entry_list[counter].fingerprint, entry_list[counter].date_time);
+    		counter ++;
 	}
 
 
 	/* Just a test print to check if everything has been loaded */
-	/*
+	
 	counter = 0;
 	for (counter=0;counter<lines;counter++){
 		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1, entry_list[counter].uid,
 			entry_list[counter].action_denied,entry_list[counter].access_type,entry_list[counter].fingerprint);
 	}
-	*/
+	
 	
 
 	int ch;
