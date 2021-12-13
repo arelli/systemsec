@@ -17,8 +17,9 @@ printf '\e[A\e[K'
 
 if [[ $choice -eq 2 ]]
 then
+	start_time=$(date +%s)
 	echo "[decryption mode]"
-	echo -ne "enter the input filename(or filenames, ls with wildcards): "
+	echo -ne "enter the input filename(with ls wildcards): "
 	read input
 	echo -ne "enter password: "
 	read -s pass
@@ -45,14 +46,14 @@ then
         done
         echo ""
         #printf '\e[A\e[K'
-	echo "Done."
 
 
 
 elif [[ $choice -eq 1 ]]
 then 
+	start_time=$(date +%s)
 	echo "[encryption_mode]"
-	echo -ne "Enter the input filename(or filenames, with ls wildcards): "
+	echo -ne "Enter the input filename(with ls wildcards): "
 	read input
 	echo -ne "Enter password: "
 	read -s pass
@@ -81,13 +82,14 @@ then
 	done
 	echo ""  
 	#printf '\e[A\e[K'  
-	echo "Done."
 
 elif [[ $choice -eq 0  ]]
 then
-	echo "How many files to create:"
+	start_time=$(date +%s)
+	echo "[file_creation_mode]"
+	echo -n "How many files to create: "
 	read number_of_files
-	echo "Basic Filename:"
+	echo -n "Basic Filename: "
 	read filename
 	COUNT=1
 	echo "-->Creating Files<--"
@@ -114,7 +116,10 @@ then
 	# flush the output:
 	echo ""  #go to the next line
 	#printf '\e[A\e[K'  # erase previous output line
-	echo "Done."
 else
 	echo "Wrong Option."
 fi
+
+end_time=$(date +%s)
+elapsed=$(( end_time - start_time ))
+echo "Finished at $(date) after $elapsed seconds."
