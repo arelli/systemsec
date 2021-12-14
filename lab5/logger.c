@@ -86,16 +86,7 @@ const char* get_time(){
   	timeinfo = localtime ( &raw_time );
   	return asctime(timeinfo);
 }
-/*
-FILE* 
-fopen64(const char *path, const char *mode){
-	//FILE* original_fopen64_ret;
-	//FILE* (*original_fopen64)(const char*, const char* );
-	//original_fopen64=dlsym(RTLD_NEXT,"fopen64");
-	return fopen(path,mode);
 
-}
-*/
 
 FILE *
 fopen(const char *path, const char *mode) 
@@ -118,7 +109,7 @@ fopen(const char *path, const char *mode)
 		access_type = 0;  // access type = file creation
 		hash = (unsigned char*)malloc(MD5_DIGEST_LENGTH+1);
 		for (int i=0; i < MD5_DIGEST_LENGTH; i++) 
-			sprintf((char*)hash+strlen((char*)hash), "\0\0");  /* fill the md5 result with zeroes */
+			hash[i]= '\0';  /* fill the md5 result with zeroes */
 	}
 
 	/* call the original fopen */

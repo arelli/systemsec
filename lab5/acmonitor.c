@@ -7,7 +7,7 @@
 /* the path to save the log file to */
 static const char LOG_PATH[] = "file_logging.log";  // This is to be accessible by all :"/tmp/file_access.log";
 
-struct entry {
+typedef struct entry_log {
 
 	char uid[8]; /* user id, max is 65536 in Linux */
 	char access_type[2]; /* access type values [0-2] */
@@ -17,7 +17,13 @@ struct entry {
 
 	char file[256]; /* 256 to save space. Should be 4096 bytes long. This could create sigsegvs!*/
 	char fingerprint[64]; /* file md5 digest, 32 bytes long */
+} entry;
+
+
+struct file_history{
+	// list of entries for this file
 };
+	
 
 
 void
@@ -31,6 +37,9 @@ usage(void)
 		   "-m, Prints malicious users\n"
 		   "-i <filename>, Prints table of users that modified "
 		   "the file <filename> and the number of modifications\n"
+		   "-e prints the files that were encrypted by the ransomware(lab5)\n"
+		   "-v prints how many files were encrypted by the ransomware "
+		   " the last 20 minutes.(lab5)\n"
 		   "-h, Help message\n\n"
 		   );
 
@@ -62,24 +71,23 @@ list_file_modifications(FILE *log, char *file_to_scan)
 	/* ... */
 
 	return;
-
-}
-/* Takes an integer array and checks if a number is inside it */
-int index_in_array(int number, int * array, size_t length_of_array){
-	if (length_of_array==0)
-		return -1;
-	for(int i=0;i<length_of_array;i++){
-		if(array[i] == number)
-			return i;  /* return the position of it */
-	}
-	return -1; // didnt find anything
 }
 
+void 
+list_encrypted_files(FILE *log){
+	/* add code here */
+}
+
+void 
+how_many_creations(FILE* log){
+	/* add code here */
+}
 
 
 int 
 main(int argc, char *argv[])
 {
+	/* get the log file */
  	FILE *log;
 	log = fopen(LOG_PATH,"r");
 	if (log == NULL) {
@@ -96,24 +104,26 @@ main(int argc, char *argv[])
 	/* return the "cursor" at the beginning of the file */
 	fseek(log, 0, SEEK_SET);
 
-
 	printf("The lines counted are: %lu\n", lines);
 	/* Load data from the log file in a array of structs */
 	int buffer_length = 1024;
 	char buffer[buffer_length];
 	char dummy_buf[200];
 
-	struct entry * entry_list;
-	size_t entry_size = sizeof(entry_list);  /* this is NOT all the space the struct need, only its definition. */
-	entry_list = (struct entry*)malloc(entry_size*lines*364+1);  /* 364 is the size that all the fileds in the struct need */
-	unsigned long counter = 0;
+	entry * entry_list;
+	entry e1;
+	entry_list = (entry*)malloc(lines*sizeof(entry)+1);  /* 364 is the size that all the fileds in the struct need */
+	printf("\nnumber of lines= %d, size of entry struct= %dB,total memory needed=%fKB \n",
+		       	lines,sizeof(entry), (float)(lines*sizeof(entry)+1)/1024.0);
 
+	unsigned long counter = 0;
 
 	/* Parse the file! */
 	while(fgets(buffer, buffer_length, log)!=NULL) {  
     		sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", entry_list[counter].uid, 
-    			entry_list[counter].file , entry_list[counter].access_type, entry_list[counter].action_denied,
-    			entry_list[counter].fingerprint, entry_list[counter].date_time);
+    			entry_list[counter].file , entry_list[counter].access_type, 
+			entry_list[counter].action_denied, entry_list[counter].fingerprint,
+		       	entry_list[counter].date_time);
     		counter ++;
 	}
 
@@ -122,8 +132,9 @@ main(int argc, char *argv[])
 	/*	
 	counter = 0;
 	for (counter=0;counter<lines;counter++){
-		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1, entry_list[counter].uid,
-			entry_list[counter].action_denied,entry_list[counter].access_type,entry_list[counter].fingerprint);
+		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1,
+	       		entry_list[counter].uid, entry_list[counter].action_denied,
+			entry_list[counter].access_type,entry_list[counter].fingerprint);
 	}
 	*/
 	
@@ -133,103 +144,26 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();	
 
-	/* declarations for -i mode */
-	struct entry * entries_for_file;
-	entries_for_file = (struct entry*)malloc(entry_size*lines+1);
-	int file_index = 0;
-	char * last_sum = malloc(64);
-
-	/* declarations for -m mode */
-	struct entry * denied;
-	denied = (struct entry*)malloc(entry_size*lines+1);
-	char * denied_flag = "1";
-	int denied_index =0;  
-
-	int *uids_denied = (int*)malloc(sizeof(int)*lines);
-	int *no_of_denials = (int*)malloc(sizeof(int)*lines);
-	int size_of_denials = 0;
-	int index_of_uid;
-	int size_of_array = 0;	
-	/* the max number of different filenames is lines. This is 
-	 * because at the extreme case we only have logged fopen()'s,
-	 * each line can hold at most 1 different files.
-	 */
-	char **filenames = malloc(lines * sizeof(char *));
-	for (int i = 0; i < lines; ++i) 
-		filenames[i] = (char *)malloc(4096+1);  /* in lunux max filepath size is 4096 */
-
-	int string_found = 0;
-	int filenames_length = 0;
-	int file_counter = 0;  /* count how many times we've seen this file */
-
-	/* end of declarations */
-
-
-
 	while ((ch = getopt(argc, argv, "hi:m")) != -1) {
 		switch (ch) {		
 		case 'i':
-			for(int i=0;i<lines;i++) {  
-				if (strncmp(entry_list[i].file,optarg,1)!=0){  /* check if it is the file we are looking for */
-					if (file_counter==0){
-						last_sum = entry_list[i].fingerprint; 
-						printf("file counter == 0\n");
-					}
-					/* if the sum has changed... */
-					else if (strncmp(entry_list[i].fingerprint,last_sum,32)!=0){
-						printf("User %s changed file from %s to %s \n",
-							entry_list[i].uid, last_sum, entry_list[i].fingerprint);
-					}
-					denied[file_index]= entry_list[i];
-					last_sum = entry_list[i].fingerprint;
-					file_counter ++;
-				}
-				file_index++;
-			}
-
+			/* Prints table of users that modified 
+			 * the file given, and the number of modifications
+			 */
 			break;
 		case 'm':
-			/* get the entries which show denial of permissions, to a new array of structs.
+			/* get the entries which show denial of permissions,
+			 * to a new array of structs.
 			 */
-			for(int i=0;i<lines;i++) {  
-				if (strncmp(entry_list[i].action_denied,denied_flag,1)==0){
-						denied[denied_index]= entry_list[i];
-						//printf("File %s had unauthorized access by uid %s \n", denied[denied_index].file, denied[denied_index].uid);
 
-						/* check if the uid is already in the list */
-						index_of_uid = index_in_array(atoi(entry_list[i].uid),uids_denied,sizeof(int)*size_of_array);
-
-						/* if filename is not previously encountered */
-						/* TODO: make it work for sifferent files not acceses!! 
-						if ((filenames_length ==0) || (string_found = 0)){
-							filenames[filenames_length] = entry_list[i].file;
-						}
-						*/
-					
-						if (index_of_uid == -1){  /* -1 means no prior elements have this uid */
-							uids_denied[size_of_array] = atoi((const char*)entry_list[i].uid);  /* save the misbehaving user! */
-							size_of_array++;
-							no_of_denials[index_of_uid] = 1;
-						}
-						else{
-							no_of_denials[index_of_uid] ++;
-							size_of_denials++;
-						}
-					}
-
-					denied_index++;
-				}
-				printf("Uids that tried to access prohibited files:\n");
-				for (int i; i<size_of_array;i++){
-					//if (no_of_denials[i]>=7)
-					printf("uid %d, %d times\n", uids_denied[i], no_of_denials[i]);
-				}
-				printf("/*Note: I haven't been able to make it work "
-					   " taking into consideration the filenames yet.\n"
-					   "This is due to academic load from the school's "
-					   "other classes. */\n" );
-
-
+			break;
+		case 'e':
+			/*Prints all the files that were encrypted by the ransomware */
+			list_encrypted_files(log);
+			break;
+		case 'v':
+			/* Prints total number of files created the last 20 minutes */
+			how_many_creations(log);
 			break;
 		default:
 			usage();
