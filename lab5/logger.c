@@ -86,10 +86,19 @@ const char* get_time(){
   	timeinfo = localtime ( &raw_time );
   	return asctime(timeinfo);
 }
+/*
+FILE* 
+fopen64(const char *path, const char *mode){
+	//FILE* original_fopen64_ret;
+	//FILE* (*original_fopen64)(const char*, const char* );
+	//original_fopen64=dlsym(RTLD_NEXT,"fopen64");
+	return fopen(path,mode);
 
+}
+*/
 
 FILE *
-fopen64(const char *path, const char *mode) 
+fopen(const char *path, const char *mode) 
 {
 	FILE *original_fopen_ret;
 	FILE *(*original_fopen)(const char*, const char*);
@@ -97,7 +106,7 @@ fopen64(const char *path, const char *mode)
 	int access_type =  1;  // action = file open
 
 	/* get the pointer to the original fopen we wrap: */
-	original_fopen = dlsym(RTLD_NEXT, "fopen64");
+	original_fopen = dlsym(RTLD_NEXT, "fopen");
 
 	/*  get md5 of file if not empty  */
 	unsigned char *hash = NULL;
@@ -139,6 +148,17 @@ fopen64(const char *path, const char *mode)
 	/* Return the actual pointer to the file, the user at higher level requested */
 	return original_fopen_ret;
 }
+
+FILE*
+fopen64(const char *path, const char *mode){
+        //FILE* original_fopen64_ret;
+        //FILE* (*original_fopen64)(const char*, const char* );
+        //original_fopen64=dlsym(RTLD_NEXT,"fopen64");
+        return fopen(path,mode);
+
+}
+
+
 
 
 size_t 

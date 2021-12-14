@@ -120,6 +120,6 @@ else
 	echo "Wrong Option."
 fi
 
-end_time=$(date +%s)
+end_time=$(date +%s)  # the time in seconds since beginning of time
 elapsed=$(( end_time - start_time ))
-echo "Finished at $(date) after $elapsed seconds."
+echo "Finished after $elapsed seconds."
