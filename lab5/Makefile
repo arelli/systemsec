@@ -1,7 +1,7 @@
 all: logger acmonitor test_aclog
 
 logger: logger.c
-	gcc -Wall -fPIC -shared -o logger.so logger.c -lcrypto -ldl -D_FILE_OFFSET_BITS=64
+	gcc -Wall -fPIC -shared -o logger.so logger.c -lcrypto -ldl 
 
 acmonitor: acmonitor.c 
 	gcc -g acmonitor.c -o acmonitor
