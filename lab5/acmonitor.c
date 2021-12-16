@@ -169,7 +169,8 @@ main(int argc, char *argv[])
 					}
 					
 					if(found==0){
-						encrypted_filenames[enc_files_counter] = entry_list[counter].file;
+						//TODO: change this to newly allocated memory and strcpy!!
+						encrypted_filenames[enc_files_counter]= entry_list[counter].file;
 						enc_files_counter++;
 					}
 					found=0;
@@ -187,8 +188,6 @@ main(int argc, char *argv[])
 			 */
 			counter = 0;
 			int files_counter = 0;
-			char** filenames;
-			filenames = (char**)malloc(sizeof(char*)*lines+1);
 
 			/* get current time */
 			time_t current_time;
@@ -199,6 +198,11 @@ main(int argc, char *argv[])
 
 			char* date;
 			double seconds_apart;
+			int file_found = 0;
+			int stored_counter = 0;
+			char** stored_filenames = (char**)malloc(sizeof(char*)*lines);
+			
+			
 			for (counter=0;counter<lines;counter++){
 				/* get date from entry_list */
 				date = (char*)calloc(strlen(entry_list[counter].date_time)+1,sizeof(char));
@@ -208,12 +212,33 @@ main(int argc, char *argv[])
 				strptime(date, "%a %b %Od %H:%M:%S %Y", &tm);
 				time_t file_time = mktime(&tm);
 				double seconds = difftime(current_time,file_time);
-				printf("The time comparison is : %f seconds apart\n", seconds);
-				if (seconds < (double)(20*60)){
-					printf("%s was opened at %s\n", 
-							entry_list[counter].file,entry_list[counter].date_time);
+				//printf("The time comparison is : %f seconds apart\n", seconds);
+
+				/* check if file was created the last 20 miniutes */
+				if ((seconds<(double)(20*60))&&(strncmp(entry_list[counter].access_type,"0",1))==0){
+					/* add the file to files list if it isn't already */
+					for(int i = 0; i<stored_counter; i++){
+						if(strncmp(stored_filenames[i],entry_list[counter].file,strlen(entry_list[counter].file))==0)
+								file_found=1;  // do not store the filename again 
+					}
+					
+					if(file_found==0){
+						//TODO: change this to newly allocated memoy!
+						stored_filenames[stored_counter]= entry_list[counter].file;
+						stored_counter++;
+					}
+					file_found=0;			
 				}
 			}
+			
+			/* print the results */
+			if(stored_counter>atoi(argv[2])){
+				printf("The files that were created the last 20 minutes are: \n ");
+				for(int i=0; i<stored_counter; i++){
+					printf("%s\n",stored_filenames[i]);
+				}
+			}
+
 		
 
 			break;
