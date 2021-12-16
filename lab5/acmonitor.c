@@ -1,6 +1,10 @@
 #define _GNU_SOURCE
 #define __USE_XOPEN
 
+/*
+ *#define difftime(t1,t0) (double) (t1 - t0)
+ */
+
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -186,15 +190,29 @@ main(int argc, char *argv[])
 			char** filenames;
 			filenames = (char**)malloc(sizeof(char*)*lines+1);
 
+			/* get current time */
+			time_t current_time;
+        		struct tm * timeinfo;
+        		time ( &current_time );
+        		//timeinfo = mktime( &current_time);
+
+
 			char* date;
+			double seconds_apart;
 			for (counter=0;counter<lines;counter++){
+				/* get date from entry_list */
 				date = (char*)calloc(strlen(entry_list[counter].date_time)+1,sizeof(char));
 				strcpy(date,entry_list[counter].date_time);
-				printf("%s\n",date);
+				/* convert it to time_t type again */
 				struct tm tm;
 				strptime(date, "%a %b %Od %H:%M:%S %Y", &tm);
-				time_t t = mktime(&tm);
-
+				time_t file_time = mktime(&tm);
+				double seconds = difftime(current_time,file_time);
+				printf("The time comparison is : %f seconds apart\n", seconds);
+				if (seconds < (double)(20*60)){
+					printf("%s was opened at %s\n", 
+							entry_list[counter].file,entry_list[counter].date_time);
+				}
 			}
 		
 
