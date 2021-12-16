@@ -1,3 +1,6 @@
+#define _GNU_SOURCE
+#define __USE_XOPEN
+
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,11 +141,8 @@ main(int argc, char *argv[])
 			 */
 			break;
 		case 'm':
-			/* get the entries which show denial of permissions,
-			 * to a new array of structs.
-			 */
-
 			break;
+
 		case 'e':
 			/*Prints all the files that were encrypted by the ransomware */
 			counter = 0;
@@ -176,9 +176,28 @@ main(int argc, char *argv[])
 				printf("%s\n",encrypted_filenames[i]);
 			}
 			break;
+
 		case 'v':
-			/* Prints total number of files created the last 20 minutes */
-			how_many_creations(log);
+			/* Show how many files were created the last 20 miniutes,
+			 * above a threshold X which is given in argv[2]
+			 */
+			counter = 0;
+			int files_counter = 0;
+			char** filenames;
+			filenames = (char**)malloc(sizeof(char*)*lines+1);
+
+			char* date;
+			for (counter=0;counter<lines;counter++){
+				date = (char*)calloc(strlen(entry_list[counter].date_time)+1,sizeof(char));
+				strcpy(date,entry_list[counter].date_time);
+				printf("%s\n",date);
+				struct tm tm;
+				strptime(date, "%a %b %Od %H:%M:%S %Y", &tm);
+				time_t t = mktime(&tm);
+
+			}
+		
+
 			break;
 		default:
 			usage();
