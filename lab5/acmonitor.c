@@ -135,31 +135,33 @@ main(int argc, char *argv[])
 	int enc_files_counter = 0;
 	char** encrypted_filenames;
 	encrypted_filenames = (char**)malloc(sizeof(char*)*lines+1);
+	char enc_suffix[]=".encrypt";
+	char* filename;
+	int found = 0;
 	for (counter=0;counter<lines;counter++){
-
-		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1,
-	       		entry_list[counter].uid, entry_list[counter].action_denied,
-			entry_list[counter].access_type,entry_list[counter].fingerprint);
-		char* filename;
-		filename = (char*)calloc(256,sizeof(char));
+		filename = (char*)calloc(strlen(entry_list[counter].file)+1,sizeof(char));
 		strcpy(filename,entry_list[counter].file);
 		strrev(filename);  /* reverse the string */
-		char enc_suffix[]=".encrypt";
 		strrev(enc_suffix);
-		int compare = strncmp(filename,enc_suffix,sizeof(enc_suffix)-1);
-		if(compare==0){	/* if the file ending is ".encrypted" */
-			/* save the file name to print later */
-			encrypted_filenames[enc_files_counter] = entry_list[counter].file;
-			enc_files_counter++;
-		}		
+		if(strncmp(filename,enc_suffix,sizeof(enc_suffix)-1)==0){  /* if the file ending is ".encrypted" */
+			/* check if the filename is already stored */
+			
+			for(int i = 0; i<enc_files_counter; i++){
+				if(strncmp(encrypted_filenames[i],entry_list[counter].file,strlen(entry_list[counter].file))==0)
+						found=1;  // do not store the filename again 
+			}
+			
+			if(found==0){
+				encrypted_filenames[enc_files_counter] = entry_list[counter].file;
+				enc_files_counter++;
+			}
+			found=0;
+		}
 	}
 
 	for (int i = 0; i<enc_files_counter; i++){
 		printf("%s\n",encrypted_filenames[i]);
 	}
-
-
-
 	
 
 	int ch;
