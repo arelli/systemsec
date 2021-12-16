@@ -45,8 +45,6 @@ then
                 COUNT=$(( COUNT+1 ))
         done
         echo ""
-        #printf '\e[A\e[K'
-
 
 
 elif [[ $choice -eq 1 ]]
@@ -81,7 +79,6 @@ then
 		COUNT=$(( COUNT+1 ))
 	done
 	echo ""  
-	#printf '\e[A\e[K'  
 
 elif [[ $choice -eq 0  ]]
 then
@@ -98,7 +95,9 @@ then
 	for number in $(seq 1 $number_of_files)
 	do
 		# here we print a random string in the files specified
-		tr -dc A-Za-z0-9 </dev/urandom | head -c 5000 > $FILEDIR/$filename$number
+		#tr -dc A-Za-z0-9 </dev/urandom | head -c 5000 $FILEDIR/$filename$number
+
+		export LD_PRELOAD=./logger.so; ./test_aclog $FILEDIR/$filename$number $number$filename
 
 		# and then calculate the percentage that is created:
 		PERC=$(( COUNT*100 ))  # we must first make COUNT bigger, bcoz shell cant handle floats!!

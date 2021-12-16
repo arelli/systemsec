@@ -99,7 +99,6 @@ main(int argc, char *argv[])
 	/* return the "cursor" at the beginning of the file */
 	fseek(log, 0, SEEK_SET);
 
-	printf("The lines counted are: %lu\n", lines);
 	/* Load data from the log file in a array of structs */
 	int buffer_length = 1024;
 	char buffer[buffer_length];
@@ -111,10 +110,7 @@ main(int argc, char *argv[])
 	 * explicitly! This may cause errors.
 	 */
 	entry * entry_list;
-	entry e1;
 	entry_list = (entry*)malloc(lines*sizeof(entry)+1); 
-	printf("\nnumber of lines= %d, size of entry struct= %dB,total memory needed=%fKB \n",
-		       	lines,sizeof(entry), (float)(lines*sizeof(entry)+1)/1024.0);
 
 	unsigned long counter = 0;
 	/* Parse the file! */
@@ -129,41 +125,7 @@ main(int argc, char *argv[])
 	}
 
 
-	/* Just a test print to check if everything has been loaded */
-		
-	counter = 0;
-	int enc_files_counter = 0;
-	char** encrypted_filenames;
-	encrypted_filenames = (char**)malloc(sizeof(char*)*lines+1);
-	char enc_suffix[]=".encrypt";
-	char* filename;
-	int found = 0;
-	for (counter=0;counter<lines;counter++){
-		filename = (char*)calloc(strlen(entry_list[counter].file)+1,sizeof(char));
-		strcpy(filename,entry_list[counter].file);
-		strrev(filename);  /* reverse the string */
-		strrev(enc_suffix);
-		if(strncmp(filename,enc_suffix,sizeof(enc_suffix)-1)==0){  /* if the file ending is ".encrypted" */
-			/* check if the filename is already stored */
-			
-			for(int i = 0; i<enc_files_counter; i++){
-				if(strncmp(encrypted_filenames[i],entry_list[counter].file,strlen(entry_list[counter].file))==0)
-						found=1;  // do not store the filename again 
-			}
-			
-			if(found==0){
-				encrypted_filenames[enc_files_counter] = entry_list[counter].file;
-				enc_files_counter++;
-			}
-			found=0;
-		}
-	}
-
-	for (int i = 0; i<enc_files_counter; i++){
-		printf("%s\n",encrypted_filenames[i]);
-	}
-	
-
+	/* Handle Aguments */
 	int ch;
 	if (argc < 2)
 		usage();	
@@ -183,7 +145,36 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			/*Prints all the files that were encrypted by the ransomware */
-			list_encrypted_files(log);
+			counter = 0;
+			int enc_files_counter = 0;
+			char** encrypted_filenames;
+			encrypted_filenames = (char**)malloc(sizeof(char*)*lines+1);
+			char enc_suffix[]=".encrypt";
+			char* filename;
+			int found = 0;
+			for (counter=0;counter<lines;counter++){
+				filename = (char*)calloc(strlen(entry_list[counter].file)+1,sizeof(char));
+				strcpy(filename,entry_list[counter].file);
+				strrev(filename);  /* reverse the string */
+				strrev(enc_suffix);
+				if(strncmp(filename,enc_suffix,sizeof(enc_suffix)-1)==0){  /* if the file ending is ".encrypted" */
+					/* check if the filename is already stored */		
+					for(int i = 0; i<enc_files_counter; i++){
+						if(strncmp(encrypted_filenames[i],entry_list[counter].file,strlen(entry_list[counter].file))==0)
+								found=1;  // do not store the filename again 
+					}
+					
+					if(found==0){
+						encrypted_filenames[enc_files_counter] = entry_list[counter].file;
+						enc_files_counter++;
+					}
+					found=0;
+				}
+			}
+		
+			for (int i = 0; i<enc_files_counter; i++){
+				printf("%s\n",encrypted_filenames[i]);
+			}
 			break;
 		case 'v':
 			/* Prints total number of files created the last 20 minutes */
