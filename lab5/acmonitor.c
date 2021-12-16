@@ -17,101 +17,22 @@ typedef struct entry_log {
 	char fingerprint[64]; /* file md5 digest, 32 bytes long */
 } entry;
 
-/* the element of the dynamic array. It *contains*
- * an array of entry_log structs, and 2 variables 
- * know when to allocate more space. Access is
- * only enabled with insert_array() and init_array(),
- * to keep the memory safely allocated.
- */
-typedef struct entry_array{
-	entry* array;
-	size_t used;
-	size_t size;
-}e_array;
+/* from SO */ 
+char *strrev(char *str)
+{
+      char *p1, *p2;
 
-
-/* stores a file's modifications based on 
- * its filename.
- */
-typedef struct file_mods{
-	e_array* modifications;
-	char filename[256];
-	int mods;
-}f_mods;
-
-/* a "dynamic array" of f_mods structs. Each struct contains 
- * info about all modifications of a file(a dynamic array of 
- * f_mods which in turn contain an e_array, a dyamic array 
- * of entries.
- */
-typedef struct file_array{
-	f_mods* fm;
-	size_t used;
-	size_t size;
-}f_array;
-
-
-/* pass by reference a "dynamic array" of structs 
- * to be initialised. It doesnt return anything, because
- * the contents of the given struct as argument are
- * themselves updated(outside the function).
- */
-void e_init_array(e_array* ar, size_t initial_size){
-	ar->array = malloc(initial_size*sizeof(entry));
-	ar->used=0;
-	ar->size=initial_size;
-}
-/* Takes as arguments the "dynamic" array and the 
- * entry(struct that keeps one log for one file)
- * that we want to add to it. Doesn't need to return
- * anything, since the structs are passed by reference.
- */
-void e_insert_array(e_array* ar, entry new_element){
-	/* first, check if we need more space */
-	if(ar->used==ar->size){
-		ar->size+=100;  /* add space for 100 new entries */
-		/* here's where the magic happens:
-		 * we allocate enough space, to fit 100 more entries
-		 * in our array. Realloc() copies the old data to the
-		 * newly allocated space.
-		 */
-		ar->array = realloc(ar->array,(ar->size*sizeof(entry)) );
-	}
-	ar->array[ar->used] = new_element; /* actually insert the new element */
-	ar->used++;
-}
-	
-/* the same functions, just for f_mods arrays */
-void f_init_array(f_array* ar, size_t initial_size){
-        ar->fm = malloc(initial_size*sizeof(f_mods));
-        ar->used=0;
-        ar->size=initial_size;
+      if (! str || ! *str)
+            return str;
+      for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+      {
+            *p1 ^= *p2;
+            *p2 ^= *p1;
+            *p1 ^= *p2;
+      }
+      return str;
 }
 
-void f_insert_array(f_array* ar, f_mods new_file){
-	if(ar->used==ar->size){
-                ar->size+=100; 
-		ar->fm = realloc(ar->fm,(ar->size*sizeof(f_mods)) );
-        }
-        ar->fm[ar->used] = new_file;
-	ar->used++;
-}
-
-/* searches a file by name in a given f_array,
- * a dynamic array of files. We do not use a hash, 
- * because it changes every time the file is moified.
- */
-int search_file_name(f_array * ar, char* filename){
-	int size = ar->size;  /* get how many files we have */
-	for (int i; i < size; i++){
-		if(strcmp(ar->fm[i].filename,filename)){
-			return i;  /* return the index */
-		}
-	}
-	return -1;  /* not found! */
-}
-
- 
 
 void
 usage(void)
@@ -127,6 +48,7 @@ usage(void)
 
 	exit(1);
 }
+
 
 
 void 
@@ -195,57 +117,56 @@ main(int argc, char *argv[])
 		       	lines,sizeof(entry), (float)(lines*sizeof(entry)+1)/1024.0);
 
 	unsigned long counter = 0;
-
-	f_array files;
-	f_init_array(&files,1000); 
-
 	/* Parse the file! */
 	while(fgets(buffer, buffer_length, log)!=NULL) {  
-    		sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", entry_list[counter].uid, 
-    			entry_list[counter].file , entry_list[counter].access_type, 
-			entry_list[counter].action_denied, entry_list[counter].fingerprint,
-		       	entry_list[counter].date_time);
-
-		/* check if the file already is in the files list */
-		int index = search_file_name(&files,entry_list[counter].file);
-		if(index>=0){  /* the file is already in the array */
-			files.fm[index].mods++;  /* note the extra modification in the file */
-			e_insert_array( files.fm[index].modifications, entry_list[counter]);
-		}
-		else{  /* the file is not in the array */
-			f_mods* new_file = (f_mods*)malloc(sizeof(f_mods));
-			strcpy(new_file->filename, entry_list[counter].file);
-			e_array entries;
-			e_init_array(&entries,100);
-			new_file = 0;
-			f_insert_array(&files,*new_file);
-		}
-
+		entry new_entry;
+    		sscanf(buffer,"%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", new_entry.uid, 
+    			new_entry.file , new_entry.access_type, 
+			new_entry.action_denied, new_entry.fingerprint,
+		       	new_entry.date_time);
+		memcpy(&entry_list[counter], &new_entry,sizeof(entry));
     		counter ++;
 	}
 
-	for(int i=0; i<counter; i++){
-		/* create an array of file structs */
-	}
-
-
-
 
 	/* Just a test print to check if everything has been loaded */
-	/*	
+		
 	counter = 0;
+	int enc_files_counter = 0;
+	char** encrypted_filenames;
+	encrypted_filenames = (char**)malloc(sizeof(char*)*lines+1);
 	for (counter=0;counter<lines;counter++){
+
 		printf("line:%d,uid:%s,denied:%s,type:%s,fingerprint:%s \n", counter+1,
 	       		entry_list[counter].uid, entry_list[counter].action_denied,
 			entry_list[counter].access_type,entry_list[counter].fingerprint);
+		char* filename;
+		filename = (char*)calloc(256,sizeof(char));
+		strcpy(filename,entry_list[counter].file);
+		strrev(filename);  /* reverse the string */
+		char enc_suffix[]=".encrypt";
+		strrev(enc_suffix);
+		int compare = strncmp(filename,enc_suffix,sizeof(enc_suffix)-1);
+		if(compare==0){	/* if the file ending is ".encrypted" */
+			/* save the file name to print later */
+			encrypted_filenames[enc_files_counter] = entry_list[counter].file;
+			enc_files_counter++;
+		}		
 	}
-	*/	
+
+	for (int i = 0; i<enc_files_counter; i++){
+		printf("%s\n",encrypted_filenames[i]);
+	}
+
+
+
+	
 
 	int ch;
 	if (argc < 2)
 		usage();	
 
-	while ((ch = getopt(argc, argv, "hi:m")) != -1) {
+	while ((ch = getopt(argc, argv, "i:v:hem")) != -1) {
 		switch (ch) {		
 		case 'i':
 			/* Prints table of users that modified 

@@ -6,7 +6,7 @@
 # "create a simple ransomware"
 
 FILEDIR=$1
-ENC_SUFFIX=".encrypted"
+ENC_SUFFIX=".encrypt"
 
 # create the directory, if it does not already exist
 mkdir -p $FILEDIR

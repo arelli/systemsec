@@ -142,11 +142,7 @@ fopen(const char *path, const char *mode)
 
 FILE*
 fopen64(const char *path, const char *mode){
-        //FILE* original_fopen64_ret;
-        //FILE* (*original_fopen64)(const char*, const char* );
-        //original_fopen64=dlsym(RTLD_NEXT,"fopen64");
         return fopen(path,mode);
-
 }
 
 
