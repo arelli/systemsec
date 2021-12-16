@@ -1,9 +1,11 @@
+/* Program to process the file log created in logger.so,
+ * and display it to the user. _GNU_SOURCE and 
+ * __USE_XOPEN are flags set for the compiler, and 
+ * enable us to use legacy functions like strptime().
+ * They do present compatibility issues!
+ */
 #define _GNU_SOURCE
 #define __USE_XOPEN
-
-/*
- *#define difftime(t1,t0) (double) (t1 - t0)
- */
 
 #include <time.h>
 #include <stdio.h>
@@ -149,6 +151,7 @@ main(int argc, char *argv[])
 
 		case 'e':
 			/*Prints all the files that were encrypted by the ransomware */
+			//TODO:Transfer it to a funciton!
 			counter = 0;
 			int enc_files_counter = 0;
 			char** encrypted_filenames;
@@ -176,7 +179,9 @@ main(int argc, char *argv[])
 					found=0;
 				}
 			}
-		
+
+			//TODO: reallocate the memory of encrypted_filenames using enc_files_counter!
+
 			for (int i = 0; i<enc_files_counter; i++){
 				printf("%s\n",encrypted_filenames[i]);
 			}
@@ -186,6 +191,7 @@ main(int argc, char *argv[])
 			/* Show how many files were created the last 20 miniutes,
 			 * above a threshold X which is given in argv[2]
 			 */
+			//TODO: transfer it to a function 
 			counter = 0;
 			int files_counter = 0;
 
@@ -201,6 +207,8 @@ main(int argc, char *argv[])
 			int file_found = 0;
 			int stored_counter = 0;
 			char** stored_filenames = (char**)malloc(sizeof(char*)*lines);
+			/* stores how many seconds before a file was created */
+			double* seconds_before = (double*)malloc(sizeof(double)*lines);
 			
 			
 			for (counter=0;counter<lines;counter++){
@@ -212,7 +220,6 @@ main(int argc, char *argv[])
 				strptime(date, "%a %b %Od %H:%M:%S %Y", &tm);
 				time_t file_time = mktime(&tm);
 				double seconds = difftime(current_time,file_time);
-				//printf("The time comparison is : %f seconds apart\n", seconds);
 
 				/* check if file was created the last 20 miniutes */
 				if ((seconds<(double)(20*60))&&(strncmp(entry_list[counter].access_type,"0",1))==0){
@@ -225,18 +232,21 @@ main(int argc, char *argv[])
 					if(file_found==0){
 						//TODO: change this to newly allocated memoy!
 						stored_filenames[stored_counter]= entry_list[counter].file;
+						seconds_before[stored_counter]= seconds;  
 						stored_counter++;
 					}
 					file_found=0;			
 				}
 			}
+			//TODO: reallocate the memory of stored_filenames using stored_counter!
 			
 			/* print the results */
 			if(stored_counter>atoi(argv[2])){
-				printf("The files that were created the last 20 minutes are: \n ");
+				printf("Files that were created the last 20 minutes: \n ");
 				for(int i=0; i<stored_counter; i++){
-					printf("%s\n",stored_filenames[i]);
+					printf("%s,   %d seconds ago.\n",stored_filenames[i],(int)seconds_before[i]);
 				}
+				printf("[total=%d files]",stored_counter);
 			}
 
 		
