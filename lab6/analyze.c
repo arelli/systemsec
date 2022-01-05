@@ -17,7 +17,7 @@
 #define PCAP_SRC_FILE	2
 
 void print_packet_info(const u_char *packet, struct pcap_pkthdr* packet_header);
-void get_stats(pcap_t* handle, char* filter_exp);
+void get_stats(pcap_t* handle	);
 
 void main(int argc, char *argv[]){
 	char error_buffer[PCAP_ERRBUF_SIZE];
@@ -27,7 +27,7 @@ void main(int argc, char *argv[]){
 		return;
 	}
 	handle = pcap_open_offline(argv[2], error_buffer);
-	get_stats(handle,"udp || tcp");
+	get_stats(handle);
 	pcap_close(handle);
 	return;
 }
@@ -38,7 +38,7 @@ void print_packet_info(const u_char *packet, struct pcap_pkthdr* packet_header) 
     printf("Packet total length %d\n", packet_header->len);
 }
 
-void get_stats(pcap_t* handle, char* filter_exp){
+void get_stats(pcap_t* handle){
 	const struct tcphdr* tcp_header;
     const struct udphdr* udp_header;
 	const struct ether_header* ethernet_header;
@@ -138,6 +138,7 @@ void get_stats(pcap_t* handle, char* filter_exp){
 				rewind(fp);
 
 	        	tcp_counter++;
+	        	tcp_bytes_counter += packet_header.len;
 	        }
 
 	        /* if the packet is UDP: */
@@ -187,6 +188,7 @@ void get_stats(pcap_t* handle, char* filter_exp){
 				rewind(fp);
 
 	        	udp_counter++;
+	        	udp_bytes_counter += packet_header.len;
 	        }
 
 
@@ -197,7 +199,8 @@ void get_stats(pcap_t* handle, char* filter_exp){
 		packet_counter++;
 	}
 	/* close the "database" of services/ports */
-	printf("\n The total number of packets UDP(%d) or TCP(%d): %d \n ",udp_counter,tcp_counter, packet_counter);
+	printf("\n The total number of UDP packets: %d and TCP packets: %d\n Total packets: %d \n ",udp_counter,tcp_counter, packet_counter);
+	printf("\n The total TCP bytes: %d , total UDP bytes: %d \n", tcp_bytes_counter, udp_bytes_counter);
 
 }
 
